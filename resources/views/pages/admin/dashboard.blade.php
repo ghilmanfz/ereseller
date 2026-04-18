@@ -3,6 +3,7 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
+<div x-data="{ addUserModal: false, roleModal: false, restockModal: false, restockProduct: '', exportModal: false, stockModal: false }">
 {{-- Date Filter --}}
 <div class="flex flex-wrap items-center gap-3 mb-6">
     <div class="flex items-center gap-2 px-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-700">
@@ -36,11 +37,11 @@
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border border-primary-300 text-primary-700">12 Roles</span>
             </div>
 
-            <button class="btn-primary w-full text-sm !py-2.5 mb-3">
+            <button @click="addUserModal = true" class="btn-primary w-full text-sm !py-2.5 mb-3">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"/></svg>
                 Tambah User
             </button>
-            <button class="w-full py-2.5 text-sm font-semibold text-neutral-700 border border-neutral-300 rounded-full hover:bg-neutral-50 transition-colors">
+            <button @click="roleModal = true" class="w-full py-2.5 text-sm font-semibold text-neutral-700 border border-neutral-300 rounded-full hover:bg-neutral-50 transition-colors">
                 Atur Role Akses
             </button>
         </div>
@@ -61,7 +62,7 @@
                             <p class="text-[11px] text-white/60">{{ $item['left'] }}</p>
                         </div>
                     </div>
-                    <a href="#" class="text-xs font-semibold text-white/80 hover:text-white transition-colors">Restock</a>
+                    <a href="#" @click.prevent="restockProduct = '{{ $item['name'] }}'; restockModal = true" class="text-xs font-semibold text-white/80 hover:text-white transition-colors">Restock</a>
                 </div>
                 @endforeach
             </div>
@@ -204,21 +205,24 @@
         <div class="card p-5">
             <p class="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Quick Actions</p>
             <div class="space-y-3">
-                @foreach([
-                    ['label' => 'Export Reports', 'desc' => 'CSV, XLSX, PDF', 'icon' => 'M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3', 'color' => 'bg-blue-50 text-blue-600'],
-                    ['label' => 'Tambah Stock', 'desc' => 'Menambahkan Stok Produk', 'icon' => 'M12 4.5v15m7.5-7.5h-15', 'color' => 'bg-primary-50 text-primary-600'],
-                    ['label' => 'Verifikasi Pesanan', 'desc' => 'Verify payments', 'icon' => 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'color' => 'bg-green-50 text-green-600'],
-                ] as $action)
-                <a href="#" class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-xl {{ $action['color'] }} flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $action['icon'] }}"/></svg>
+                <a href="#" @click.prevent="exportModal = true" class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-semibold text-neutral-800">{{ $action['label'] }}</p>
-                        <p class="text-[11px] text-neutral-400 truncate">{{ $action['desc'] }}</p>
-                    </div>
+                    <div class="min-w-0"><p class="text-sm font-semibold text-neutral-800">Export Reports</p><p class="text-[11px] text-neutral-400 truncate">CSV, XLSX, PDF</p></div>
                 </a>
-                @endforeach
+                <a href="#" @click.prevent="stockModal = true" class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    </div>
+                    <div class="min-w-0"><p class="text-sm font-semibold text-neutral-800">Tambah Stock</p><p class="text-[11px] text-neutral-400 truncate">Menambahkan Stok Produk</p></div>
+                </a>
+                <a href="/admin/produk-pesanan" class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="min-w-0"><p class="text-sm font-semibold text-neutral-800">Verifikasi Pesanan</p><p class="text-[11px] text-neutral-400 truncate">Verify payments</p></div>
+                </a>
             </div>
         </div>
 
@@ -243,5 +247,157 @@
             </div>
         </div>
     </div>
+
 </div>
+
+{{-- ======== TAMBAH USER MODAL ======== --}}
+<div x-show="addUserModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="addUserModal = false">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="addUserModal = false"></div>
+    <div x-show="addUserModal" x-transition class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 z-10">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-neutral-800">Tambah User Baru</h3>
+            <button @click="addUserModal = false" class="p-1.5 text-neutral-400 hover:text-neutral-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Nama Lengkap</label>
+                <input type="text" placeholder="Masukkan nama lengkap" class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Nomor WhatsApp</label>
+                <input type="text" placeholder="08xx-xxxx-xxxx" class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Alamat</label>
+                <textarea rows="2" placeholder="Alamat lengkap" class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Role</label>
+                    <select class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option>Customer</option>
+                        <option>Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Password</label>
+                    <input type="password" placeholder="Min. 6 karakter" class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button @click="addUserModal = false" class="flex-1 py-2.5 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors">Batal</button>
+            <button @click="addUserModal = false" class="flex-1 btn-primary text-sm !py-2.5">Simpan User</button>
+        </div>
+    </div>
+</div>
+
+{{-- ======== ATUR ROLE AKSES MODAL ======== --}}
+<div x-show="roleModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="roleModal = false">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="roleModal = false"></div>
+    <div x-show="roleModal" x-transition class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-neutral-800">Atur Role Akses</h3>
+            <button @click="roleModal = false" class="p-1.5 text-neutral-400 hover:text-neutral-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div class="space-y-3">
+            @foreach([
+                ['role' => 'Super Admin', 'desc' => 'Akses penuh ke semua fitur', 'count' => 1, 'color' => 'bg-red-100 text-red-700'],
+                ['role' => 'Admin', 'desc' => 'Kelola pesanan & produk', 'count' => 3, 'color' => 'bg-primary-100 text-primary-700'],
+                ['role' => 'Customer', 'desc' => 'Pemesanan produk', 'count' => 1398, 'color' => 'bg-blue-100 text-blue-700'],
+            ] as $r)
+            <div class="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <span class="px-2 py-1 rounded-lg text-[10px] font-bold {{ $r['color'] }}">{{ $r['role'] }}</span>
+                    <p class="text-xs text-neutral-500">{{ $r['desc'] }}</p>
+                </div>
+                <span class="text-xs font-semibold text-neutral-600">{{ $r['count'] }}</span>
+            </div>
+            @endforeach
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button @click="roleModal = false" class="flex-1 py-2.5 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors">Tutup</button>
+        </div>
+    </div>
+</div>
+
+{{-- ======== RESTOCK MODAL ======== --}}
+<div x-show="restockModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="restockModal = false">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="restockModal = false"></div>
+    <div x-show="restockModal" x-transition class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-neutral-800">Restock Produk</h3>
+            <button @click="restockModal = false" class="p-1.5 text-neutral-400 hover:text-neutral-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <p class="text-sm text-neutral-600 mb-4">Menambah stok untuk: <span class="font-semibold text-neutral-800" x-text="restockProduct"></span></p>
+        <div>
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Jumlah Tambah Stok</label>
+            <input type="number" value="10" min="1" class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button @click="restockModal = false" class="flex-1 py-2.5 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors">Batal</button>
+            <button @click="restockModal = false" class="flex-1 btn-primary text-sm !py-2.5">Tambah Stok</button>
+        </div>
+    </div>
+</div>
+
+{{-- ======== EXPORT REPORTS MODAL ======== --}}
+<div x-show="exportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="exportModal = false">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="exportModal = false"></div>
+    <div x-show="exportModal" x-transition class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-neutral-800">Export Laporan</h3>
+            <button @click="exportModal = false" class="p-1.5 text-neutral-400 hover:text-neutral-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <p class="text-xs text-neutral-500 mb-4">Pilih format file untuk mengunduh laporan.</p>
+        <div class="space-y-2">
+            <button @click="exportModal = false" class="w-full flex items-center gap-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors text-left">
+                <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600 font-bold text-xs">PDF</div>
+                <div><p class="text-sm font-semibold text-neutral-800">PDF Report</p><p class="text-[11px] text-neutral-400">Laporan detail dengan grafik</p></div>
+            </button>
+            <button @click="exportModal = false" class="w-full flex items-center gap-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors text-left">
+                <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 font-bold text-xs">XLS</div>
+                <div><p class="text-sm font-semibold text-neutral-800">Excel Spreadsheet</p><p class="text-[11px] text-neutral-400">Data mentah untuk analisis</p></div>
+            </button>
+            <button @click="exportModal = false" class="w-full flex items-center gap-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors text-left">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">CSV</div>
+                <div><p class="text-sm font-semibold text-neutral-800">CSV File</p><p class="text-[11px] text-neutral-400">Import ke sistem lain</p></div>
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ======== TAMBAH STOCK MODAL ======== --}}
+<div x-show="stockModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="stockModal = false">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="stockModal = false"></div>
+    <div x-show="stockModal" x-transition class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 z-10">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-neutral-800">Tambah Stok Produk</h3>
+            <button @click="stockModal = false" class="p-1.5 text-neutral-400 hover:text-neutral-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Pilih Produk</label>
+                <select class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option>SR12 Exclusive Facial Wash</option>
+                    <option>SR12 Suncare Lotion SPF 30</option>
+                    <option>SR12 Acne Peel Solution</option>
+                    <option>SR12 Lip Care Cherry</option>
+                    <option>SR12 Lightening Body Lotion</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Jumlah Stok Ditambah</label>
+                <input type="number" value="10" min="1" class="w-full px-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button @click="stockModal = false" class="flex-1 py-2.5 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors">Batal</button>
+            <button @click="stockModal = false" class="flex-1 btn-primary text-sm !py-2.5">Tambah Stok</button>
+        </div>
+    </div>
+</div>
+
+</div>{{-- end Alpine wrapper --}}
 @endsection
+
