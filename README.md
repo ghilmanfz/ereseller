@@ -1,21 +1,21 @@
 # E-Reseller
 
-Sistem **self-ordering** berbasis web yang dirancang untuk memudahkan pelanggan melakukan pemesanan produk secara mandiri — mulai dari browsing katalog, checkout, hingga pelacakan status pesanan.
+Sistem **self-ordering** berbasis web yang dirancang untuk memudahkan pelanggan melakukan pemesanan produk secara mandiri â€” mulai dari browsing katalog, checkout, hingga pelacakan status pesanan.
 
-> ?? **Status:** Frontend Only — Backend / API belum diimplementasikan.
+> ?? **Status:** Frontend Only â€” Backend / API belum diimplementasikan.
 
 ---
 
 ## ?? Fitur
 
-- ??? **Katalog Produk** — Tampilkan produk lengkap dengan foto, nama, harga, stok, dan deskripsi
-- ?? **Pencarian & Filter** — Search bar dan filter kategori (skincare, bodycare, dll.)
-- ?? **Keranjang Belanja** — Tambah, ubah jumlah, hapus produk, dan lihat total harga
-- ?? **Formulir Pemesanan** — Input data diri, pilihan metode pengiriman (Ambil di Toko / Dikirim) dan pembayaran (Transfer / COD)
-- ? **Konfirmasi Pembayaran** — Tombol "Saya sudah membayar" tanpa perlu upload bukti transfer
-- ?? **Pelacakan Pesanan** — Pantau status: Diterima ? Diproses ? Dikemas ? Siap Diambil/Dikirim
-- ?? **Autentikasi** — Halaman login sebelum mengakses website
-- ??? **Panel Admin** — Kelola pesanan, verifikasi pembayaran, update status, dan manajemen produk & stok
+- ??? **Katalog Produk** â€” Tampilkan produk lengkap dengan foto, nama, harga, stok, dan deskripsi
+- ?? **Pencarian & Filter** â€” Search bar dan filter kategori (skincare, bodycare, dll.)
+- ?? **Keranjang Belanja** â€” Tambah, ubah jumlah, hapus produk, dan lihat total harga
+- ?? **Formulir Pemesanan** â€” Input data diri, pilihan metode pengiriman (Ambil di Toko / Dikirim) dan pembayaran (Transfer / COD)
+- ? **Konfirmasi Pembayaran** â€” Tombol "Saya sudah membayar" tanpa perlu upload bukti transfer
+- ?? **Pelacakan Pesanan** â€” Pantau status: Diterima ? Diproses ? Dikemas ? Siap Diambil/Dikirim
+- ?? **Autentikasi** â€” Halaman login sebelum mengakses website
+- ??? **Panel Admin** â€” Kelola pesanan, verifikasi pembayaran, update status, dan manajemen produk & stok
 
 ---
 
@@ -36,7 +36,7 @@ Sistem **self-ordering** berbasis web yang dirancang untuk memudahkan pelanggan 
 
 ## ??? Tech Stack
 
-- **Framework:** Laravel 11
+- **Framework:** Laravel 13
 - **Frontend:** Blade Templating, Tailwind CSS (via Vite)
 - **Build Tool:** Vite
 
@@ -101,4 +101,4 @@ resources/views/
 
 ## ?? Author
 
-**ghilmanfz** — [github.com/ghilmanfz](https://github.com/ghilmanfz)
+**ghilmanfz** â€” [github.com/ghilmanfz](https://github.com/ghilmanfz)
