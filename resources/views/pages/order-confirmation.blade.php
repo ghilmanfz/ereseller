@@ -1,39 +1,51 @@
 @extends('layouts.app')
 @section('title', 'Konfirmasi Pesanan')
 @section('content')
+@php
+    $isOnlinePayment = in_array($order->payment_method, ['transfer', 'ewallet'], true);
+    $isPendingPayment = $order->status === 'pending_payment';
+    $isSubmitted = $order->status === 'payment_submitted';
+    $isPickup = $order->shipping_method === 'pickup';
+@endphp
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     {{-- Success Header --}}
     <div class="text-center mb-8">
         <div class="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center mb-4">
             <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-        <h1 class="text-2xl font-serif font-bold text-neutral-900">Pesanan Anda Telah Diterima!</h1>
-        <p class="mt-2 text-sm text-neutral-500">Silakan lakukan pembayaran agar pesanan Anda<br>dapat segera kami proses dan kirimkan.</p>
+        <h1 class="text-2xl font-serif font-bold text-neutral-900">Pesanan Berhasil Dibuat</h1>
+        @if($isOnlinePayment && $isPendingPayment)
+            <p class="mt-2 text-sm text-neutral-500">Silakan lakukan pembayaran agar pesanan Anda dapat masuk ke tahap proses.</p>
+        @elseif($order->payment_method === 'cod')
+            <p class="mt-2 text-sm text-neutral-500">Pesanan COD Anda sudah tercatat dan menunggu proses pengiriman.</p>
+        @elseif($order->payment_method === 'pay_at_store')
+            <p class="mt-2 text-sm text-neutral-500">Pesanan pickup Anda sudah tercatat. Silakan bayar saat pengambilan di toko.</p>
+        @else
+            <p class="mt-2 text-sm text-neutral-500">Pesanan Anda sudah masuk dan sedang kami tindak lanjuti.</p>
+        @endif
         <div class="mt-4 inline-flex items-center px-4 py-2 border border-primary-200 rounded-full bg-primary-50">
-            <span class="text-sm font-semibold text-primary-700">ID PESANAN: SR12-240508-882I</span>
+            <span class="text-sm font-semibold text-primary-700">ID PESANAN: {{ $order->order_code }}</span>
         </div>
     </div>
 
     {{-- Payment Instructions --}}
+    @if($isOnlinePayment)
     <div class="card p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-base font-bold text-neutral-800 font-sans">Instruksi Pembayaran</h2>
             <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
         </div>
-        <p class="text-sm text-neutral-500 mb-4">Pilih salah satu rekening di bawah ini</p>
+        <p class="text-sm text-neutral-500 mb-4">Pilih salah satu rekening di bawah ini untuk metode {{ $order->payment_method === 'ewallet' ? 'E-Wallet Transfer' : 'Transfer Bank' }}.</p>
 
         <div class="space-y-3">
-            @foreach([
-                ['bank' => 'BANK CENTRAL ASIA (BCA)', 'number' => '8420-112-998', 'name' => 'a.n. SINTIA SR12 DISTRIBUTOR', 'color' => 'bg-blue-600'],
-                ['bank' => 'BANK MANDIRI', 'number' => '133-00-1234567-8', 'name' => 'a.n. SINTIA SR12 DISTRIBUTOR', 'color' => 'bg-yellow-500'],
-            ] as $account)
+            @foreach($paymentAccounts as $account)
             <div class="flex items-center justify-between p-4 border border-neutral-200 rounded-xl">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 {{ $account['color'] }} rounded-lg flex items-center justify-center text-white text-xs font-bold">{{ substr($account['bank'], 0, 1) }}</div>
+                    <div class="w-10 h-10 {{ $account->badge_color }} rounded-lg flex items-center justify-center text-white text-xs font-bold">{{ substr($account->bank_name, 0, 1) }}</div>
                     <div>
-                        <p class="text-xs text-neutral-400 uppercase font-medium">{{ $account['bank'] }}</p>
-                        <p class="text-lg font-bold text-neutral-800 tracking-wider">{{ $account['number'] }}</p>
-                        <p class="text-xs text-neutral-500">{{ $account['name'] }}</p>
+                        <p class="text-xs text-neutral-400 uppercase font-medium">{{ $account->bank_name }}</p>
+                        <p class="text-lg font-bold text-neutral-800 tracking-wider">{{ $account->account_number }}</p>
+                        <p class="text-xs text-neutral-500">{{ $account->account_holder }}</p>
                     </div>
                 </div>
                 <button class="flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700">
@@ -56,34 +68,42 @@
                 <li class="flex items-start gap-2"><span>•</span> Simpan bukti transfer Anda untuk berjaga-jaga jika diperlukan di kemudian hari.</li>
             </ul>
         </div>
+
+        @if($isSubmitted)
+        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <p class="text-sm font-semibold text-blue-700">Bukti pembayaran sudah dikirim.</p>
+            <p class="text-xs text-blue-700 mt-1">Admin akan memverifikasi pembayaran Anda secepatnya.</p>
+            @if($order->payment_proof_path)
+                <a href="{{ asset('storage/'.$order->payment_proof_path) }}" target="_blank" class="inline-flex mt-3 text-sm font-semibold text-blue-700 underline">Lihat Bukti Pembayaran</a>
+            @endif
+        </div>
+        @endif
     </div>
+    @endif
 
     {{-- Order Summary --}}
     <div class="card p-6 mb-6">
         <h2 class="text-base font-bold text-neutral-800 font-sans mb-4">Ringkasan Pesanan</h2>
         <div class="divide-y divide-neutral-100">
-            @foreach([
-                ['name' => 'Salimah Slim SR12 Herbal', 'qty' => 2, 'price' => 95000, 'total' => 190000],
-                ['name' => 'Susu Kambing Gomilku Original', 'qty' => 1, 'price' => 147000, 'total' => 147000],
-            ] as $item)
+            @foreach($order->items as $item)
             <div class="flex items-center justify-between py-3">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center">
                         <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-neutral-800">{{ $item['name'] }}</p>
-                        <p class="text-xs text-neutral-400">{{ $item['qty'] }} x Rp {{ number_format($item['price'], 0, ',', '.') }}</p>
+                        <p class="text-sm font-semibold text-neutral-800">{{ $item->product_name }}</p>
+                        <p class="text-xs text-neutral-400">{{ $item->quantity }} x Rp {{ number_format((int) $item->price, 0, ',', '.') }}</p>
                     </div>
                 </div>
-                <span class="text-sm font-bold text-primary-600">Rp {{ number_format($item['total'], 0, ',', '.') }}</span>
+                <span class="text-sm font-bold text-primary-600">Rp {{ number_format((int) $item->line_total, 0, ',', '.') }}</span>
             </div>
             @endforeach
         </div>
         <div class="mt-3 pt-3 border-t border-neutral-200 space-y-2 text-sm">
-            <div class="flex justify-between text-neutral-500"><span>Subtotal Produk</span><span>Rp 337.000</span></div>
-            <div class="flex justify-between text-neutral-500"><span>Biaya Pengiriman</span><span>Rp 15.000</span></div>
-            <div class="flex justify-between font-bold text-neutral-800 text-lg pt-2 border-t border-neutral-200"><span>Total Pembayaran</span><span class="text-primary-600">Rp 352.000</span></div>
+            <div class="flex justify-between text-neutral-500"><span>Subtotal Produk</span><span>Rp {{ number_format((int) $order->subtotal, 0, ',', '.') }}</span></div>
+            <div class="flex justify-between text-neutral-500"><span>Biaya Pengiriman</span><span>Rp {{ number_format((int) $order->shipping_cost, 0, ',', '.') }}</span></div>
+            <div class="flex justify-between font-bold text-neutral-800 text-lg pt-2 border-t border-neutral-200"><span>Total Pembayaran</span><span class="text-primary-600">Rp {{ number_format((int) $order->total, 0, ',', '.') }}</span></div>
         </div>
     </div>
 
@@ -97,7 +117,23 @@
     </div>
 
     {{-- Action Buttons --}}
-    <button class="btn-primary w-full !py-4 text-base">Saya Sudah Membayar</button>
+    @if($isOnlinePayment && $isPendingPayment)
+        <form method="POST" action="/pesanan/{{ $order->order_code }}/bayar" enctype="multipart/form-data" class="space-y-3">
+            @csrf
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 mb-1.5">Upload Bukti Transfer / E-Wallet</label>
+                <input type="file" name="payment_proof" accept="image/*" class="input-field !py-2.5">
+                @error('payment_proof')
+                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                @enderror
+            </div>
+            <button class="btn-primary w-full !py-4 text-base">Saya Sudah Membayar</button>
+        </form>
+    @elseif($isOnlinePayment && $isSubmitted)
+        <a href="/pesanan/{{ $order->order_code }}" class="btn-primary w-full !py-4 text-base inline-flex items-center justify-center">Lihat Status Verifikasi</a>
+    @else
+        <a href="/pesanan/{{ $order->order_code }}" class="btn-primary w-full !py-4 text-base inline-flex items-center justify-center">Lihat Status Pesanan</a>
+    @endif
     <a href="/katalog" class="flex items-center justify-center gap-2 mt-4 text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
         Kembali ke Katalog

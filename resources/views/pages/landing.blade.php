@@ -98,14 +98,7 @@
                 Lihat Katalog Lengkap <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
             </a>
         </div>
-        @php
-        $products = [
-            ['name' => 'Acne Care Facial Wash', 'category' => 'Skincare', 'price' => 65000, 'rating' => 4.8, 'stock' => 24, 'stock_status' => 'In-Stock', 'slug' => 'acne-care-facial-wash', 'image' => 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=500&fit=crop', 'description' => 'Pembersih wajah untuk kulit berjerawat'],
-            ['name' => 'Sunblock Cream SR12', 'category' => 'Skincare', 'price' => 85000, 'rating' => 4.9, 'stock' => 15, 'stock_status' => 'Limited', 'slug' => 'sunblock-cream-sr12', 'image' => 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=400&h=500&fit=crop', 'description' => 'Perlindungan UV dengan bahan alami'],
-            ['name' => 'Deodorant Spray Premium', 'category' => 'Bodycare', 'price' => 40000, 'rating' => 4.6, 'stock' => 50, 'stock_status' => 'In-Stock', 'slug' => 'deodorant-spray-premium', 'image' => 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=400&h=500&fit=crop', 'description' => 'Menghilangkan bau badan 24 jam'],
-            ['name' => 'Kopi Radix SR12', 'category' => 'Health', 'price' => 120000, 'rating' => 4.8, 'stock' => 30, 'stock_status' => 'In-Stock', 'slug' => 'kopi-radix-sr12', 'image' => 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=500&fit=crop', 'description' => 'Kopi herbal untuk stamina'],
-        ];
-        @endphp
+        @php($products = $products ?? [])
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             @foreach($products as $product)
                 @include('components.product-card', ['product' => $product])

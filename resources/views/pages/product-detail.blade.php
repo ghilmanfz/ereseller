@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'SR12 Exclusive Compact Powder - Sheer Pink')
+@section('title', $product->name)
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     {{-- Breadcrumb --}}
@@ -8,14 +8,14 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
         <a href="/katalog" class="hover:text-primary-600 transition-colors">Katalog</a>
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-        <span class="text-neutral-700 font-medium">SR12 Exclusive Compact Powder</span>
+        <span class="text-neutral-700 font-medium">{{ $product->name }}</span>
     </nav>
 
     <div class="grid lg:grid-cols-2 gap-10 mb-16">
         {{-- Image Gallery --}}
         <div x-data="{ activeImg: 0 }">
             <div class="aspect-square bg-neutral-100 rounded-2xl overflow-hidden mb-4">
-                <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&h=600&fit=crop" alt="Product" class="w-full h-full object-cover">
+                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
             </div>
             <div class="flex gap-3">
                 @for($i = 0; $i < 3; $i++)
@@ -40,28 +40,30 @@
         {{-- Product Info --}}
         <div>
             <div class="flex items-center justify-between mb-2">
-                <span class="badge-primary text-xs">Kosmetik</span>
+                <span class="badge-primary text-xs">{{ $product->category?->name }}</span>
                 <div class="flex items-center gap-1">
                     <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                    <span class="text-sm font-semibold text-neutral-700">4.8</span>
+                    <span class="text-sm font-semibold text-neutral-700">{{ number_format((float) $product->rating, 1) }}</span>
                     <span class="text-xs text-neutral-400">(125 ulasan)</span>
                 </div>
             </div>
 
-            <h1 class="text-2xl md:text-3xl font-serif font-bold text-neutral-900 leading-tight">SR12 Exclusive Compact Powder – Sheer Pink</h1>
+            <h1 class="text-2xl md:text-3xl font-serif font-bold text-neutral-900 leading-tight">{{ $product->name }}</h1>
 
             <div class="mt-4 flex items-center gap-3">
-                <span class="text-2xl font-bold text-primary-600">Rp 85.000</span>
-                <span class="text-base text-neutral-400 line-through">Rp 95.000</span>
+                <span class="text-2xl font-bold text-primary-600">Rp {{ number_format((int) $product->price, 0, ',', '.') }}</span>
+                @if($product->compare_price)
+                <span class="text-base text-neutral-400 line-through">Rp {{ number_format((int) $product->compare_price, 0, ',', '.') }}</span>
+                @endif
             </div>
 
             <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 rounded-lg text-sm text-neutral-600">
                 <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Stok Tersedia: 24 unit
+                Stok Tersedia: {{ $product->stock }} unit
             </div>
 
             <p class="mt-5 text-sm text-neutral-600 leading-relaxed">
-                Bedak padat eksklusif dengan formula lembut yang membantu menyamarkan noda hitam dan garis halus di wajah. Memberikan hasil akhir yang matte dan natural, cocok untuk penggunaan sehari-hari maupun acara formal.
+                {{ $product->description }}
             </p>
 
             {{-- Accordions --}}
@@ -89,13 +91,15 @@
             </div>
 
             {{-- Add to Cart --}}
-            <div class="mt-6 card p-5" x-data="{ qty: 1, price: 85000 }">
+            <form action="/keranjang/tambah/{{ $product->slug }}" method="POST" class="mt-6 card p-5" x-data="{ qty: 1, price: {{ (int) $product->price }} }">
+                @csrf
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="text-sm font-semibold text-neutral-700">Pilih Jumlah</p>
                         <div class="flex items-center gap-3 mt-2">
                             <button @click="qty = Math.max(1, qty - 1)" class="w-9 h-9 rounded-lg border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 transition-colors">−</button>
                             <span class="text-base font-semibold w-8 text-center" x-text="qty"></span>
+                            <input type="hidden" name="quantity" :value="qty">
                             <button @click="qty++" class="w-9 h-9 rounded-lg border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 transition-colors">+</button>
                         </div>
                     </div>
@@ -104,17 +108,17 @@
                         <p class="text-xl font-bold text-neutral-800">Rp <span x-text="(qty * price).toLocaleString('id-ID')">85.000</span></p>
                     </div>
                 </div>
-                <button class="btn-primary w-full !py-3.5">
+                <button type="submit" class="btn-primary w-full !py-3.5">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
                     Tambah ke Keranjang
                 </button>
                 <p class="text-xs text-neutral-400 text-center mt-2">*Admin akan memverifikasi pesanan Anda secara manual setelah pembayaran.</p>
-            </div>
+            </form>
 
             {{-- WhatsApp Help --}}
             <div class="mt-4 card p-4 flex items-center gap-3">
                 <svg class="w-5 h-5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
-                <p class="text-sm text-neutral-600">Butuh bantuan atau konsultasi produk? <a href="#" class="text-primary-600 font-semibold hover:text-primary-700">Hubungi Admin via WhatsApp.</a></p>
+                <p class="text-sm text-neutral-600">Butuh bantuan atau konsultasi produk? <a href="{{ $storeWhatsappLink }}" target="_blank" rel="noopener" class="text-primary-600 font-semibold hover:text-primary-700">Hubungi Admin via WhatsApp.</a></p>
             </div>
         </div>
     </div>
@@ -125,15 +129,8 @@
             <h2 class="text-2xl font-serif font-bold text-neutral-900">Rekomendasi Untuk Anda</h2>
             <a href="/katalog" class="text-sm font-semibold text-primary-600 hover:text-primary-700">Lihat Semua Katalog</a>
         </div>
-        @php
-        $recs = [
-            ['name' => 'Facial Wash Honey', 'category' => 'Skincare', 'price' => 45000, 'rating' => 4.7, 'stock' => 20, 'stock_status' => 'In-Stock', 'slug' => 'facial-wash-honey', 'image' => 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=500&fit=crop', 'description' => ''],
-            ['name' => 'Sunscreen Pink', 'category' => 'Skincare', 'price' => 65000, 'rating' => 4.8, 'stock' => 12, 'stock_status' => 'In-Stock', 'slug' => 'sunscreen-pink', 'image' => 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=400&h=500&fit=crop', 'description' => ''],
-            ['name' => 'Lip Care Cherry', 'category' => 'Cosmetic', 'price' => 25000, 'rating' => 4.5, 'stock' => 30, 'stock_status' => 'In-Stock', 'slug' => 'lip-care-cherry', 'image' => 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&h=500&fit=crop', 'description' => ''],
-        ];
-        @endphp
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            @foreach($recs as $product)
+            @foreach($recommendations as $product)
                 @include('components.product-card', ['product' => $product])
             @endforeach
         </div>
