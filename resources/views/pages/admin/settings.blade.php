@@ -22,8 +22,12 @@
     @endif
 
     <div class="card p-6">
-        <h2 class="text-base font-bold text-neutral-800 font-sans mb-4">Pengaturan Toko</h2>
-        <form id="settings-form" method="POST" action="/admin/pengaturan" class="space-y-4">
+        <h2 class="text-base font-bold text-neutral-800 font-sans mb-4">Pengaturan Toko
+            @if(auth()->user()->role === 'owner')
+            <span class="ml-2 text-xs font-normal text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Read Only</span>
+            @endif
+        </h2>
+        <form id="settings-form" method="POST" action="/admin/pengaturan" class="space-y-4" @if(auth()->user()->role === 'owner') onsubmit="return false;" @endif>
             @csrf
             
             {{-- Store Name --}}
@@ -118,12 +122,21 @@
             </div>
 
             {{-- Form Actions --}}
+            @if(auth()->user()->role === 'admin')
             <div class="flex gap-2 pt-4 border-t border-neutral-200">
                 <button type="submit" class="btn-primary">
                     <span id="submit-text">Simpan Pengaturan</span>
                 </button>
                 <button type="reset" class="btn-outline">Reset</button>
             </div>
+            @else
+            <div class="flex gap-2 pt-4 border-t border-neutral-200">
+                <div class="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                    Anda hanya memiliki akses baca. Pengaturan tidak dapat diubah.
+                </div>
+            </div>
+            @endif
         </form>
     </div>
 </div>

@@ -18,14 +18,20 @@
                     <input type="text" name="q" value="{{ $currentQuery ?? '' }}" placeholder="Cari user..." class="input-field !py-2 !w-44">
                     <button type="submit" class="btn-outline text-sm !py-2 !px-4">Cari</button>
                 </form>
+                @if(auth()->user()->role === 'admin')
                 <button type="button" onclick="openUserModal()" class="btn-primary text-sm">Tambah User</button>
+                @endif
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="grid grid-cols-3 gap-3 mb-4">
             <div class="p-3 rounded-xl bg-primary-50 border border-primary-100">
                 <p class="text-xs text-neutral-500">Admin</p>
                 <p class="text-lg font-bold text-primary-700">{{ $adminCount }}</p>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <p class="text-xs text-neutral-500">Owner</p>
+                <p class="text-lg font-bold text-amber-700">{{ $ownerCount ?? 0 }}</p>
             </div>
             <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
                 <p class="text-xs text-neutral-500">Customer</p>
@@ -51,9 +57,10 @@
                         <td class="py-3 px-2 text-xs text-neutral-400">{{ $user->email }}</td>
                         <td class="py-3 px-2 text-neutral-600">{{ $user->whatsapp }}</td>
                         <td class="py-3 px-2">
-                            <span class="badge {{ $user->role === 'admin' ? 'badge-primary' : 'badge-success' }}">{{ strtoupper($user->role) }}</span>
+                            <span class="badge {{ $user->role === 'admin' ? 'badge-primary' : ($user->role === 'owner' ? 'badge-warning' : 'badge-success') }}">{{ strtoupper($user->role) }}</span>
                         </td>
                         <td class="py-3 px-2">
+                            @if(auth()->user()->role === 'admin')
                             <div class="flex items-center gap-2">
                                 <button type="button" onclick='openUserModal({{ json_encode($user) }})' class="px-2 py-1 text-xs border border-neutral-300 rounded-lg hover:bg-neutral-50">Edit</button>
                                 <form method="POST" action="/admin/users/{{ $user->id }}" onsubmit="return confirm('Hapus user ini?')">
@@ -62,6 +69,9 @@
                                     <button class="px-2 py-1 text-xs border border-red-300 text-red-700 rounded-lg hover:bg-red-50">Hapus</button>
                                 </form>
                             </div>
+                            @else
+                            <span class="text-xs text-neutral-400">-</span>
+                            @endif
                         </td>
                     </tr>
                     @endforeach
@@ -73,15 +83,16 @@
     <div class="card p-6">
         <h2 class="text-base font-bold text-neutral-800 font-sans mb-4">Info</h2>
         <div class="space-y-3 text-sm text-neutral-600">
-            <p>✓ Total Aktif: <strong class="text-neutral-800">{{ $adminCount + $customerCount }}</strong></p>
+            <p>✓ Total Aktif: <strong class="text-neutral-800">{{ $adminCount + ($ownerCount ?? 0) + $customerCount }}</strong></p>
             <p>✓ Admin: <strong class="text-primary-700">{{ $adminCount }}</strong></p>
+            <p>✓ Owner: <strong class="text-amber-700">{{ $ownerCount ?? 0 }}</strong></p>
             <p>✓ Customer: <strong class="text-blue-700">{{ $customerCount }}</strong></p>
         </div>
     </div>
 </div>
 
 {{-- User Modal --}}
-<div id="user-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+<div id="user-modal" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div class="sticky top-0 bg-white border-b border-neutral-200 p-4 flex items-center justify-between">
             <h3 class="text-lg font-bold text-neutral-800" id="modal-title">Tambah User</h3>
@@ -122,6 +133,7 @@
                 <select name="role" id="user_role" class="input-field mt-1" required>
                     <option value="customer">Customer</option>
                     <option value="admin">Admin</option>
+                    <option value="owner">Owner</option>
                 </select>
             </div>
 
@@ -177,10 +189,13 @@ function openUserModal(user = null) {
     }
 
     modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function closeUserModal() {
-    document.getElementById('user-modal').classList.add('hidden');
+    const modal = document.getElementById('user-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 }
 
 // Close modal when clicking outside

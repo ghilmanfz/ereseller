@@ -43,7 +43,7 @@
     </div>
 
     {{-- Bulk Actions --}}
-    @if($orders->count() > 0)
+    @if($orders->count() > 0 && auth()->user()->role === 'admin')
         <div class="mb-4 p-4 bg-neutral-50 rounded-lg hidden" id="bulk-actions" x-data="{ selectedCount: 0 }">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-2">
@@ -88,7 +88,9 @@
                 @forelse($orders as $order)
                     <tr class="hover:bg-neutral-50">
                         <td class="py-3 px-2 w-8">
+                            @if(auth()->user()->role === 'admin')
                             <input type="checkbox" name="order_ids" value="{{ $order->id }}" class="rounded border-neutral-300" onchange="updateBulkActionsUI()">
+                            @endif
                         </td>
                         <td class="py-3 px-2">
                             <p class="font-mono text-xs text-neutral-700">{{ $order->order_code }}</p>
@@ -118,6 +120,7 @@
                         </td>
                         <td class="py-3 px-2">
                             <div class="flex flex-col gap-2">
+                            @if(auth()->user()->role === 'admin')
                                 @if(in_array($order->payment_method, ['transfer', 'ewallet'], true) && $order->status === 'payment_submitted')
                                     <form method="POST" action="/admin/pesanan/{{ $order->id }}/verifikasi-pembayaran">
                                         @csrf
@@ -163,6 +166,9 @@
                                         <button class="px-3 py-1.5 text-xs font-semibold border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50">Reminder Pickup</button>
                                     </form>
                                 @endif
+                            @else
+                                <span class="text-xs text-neutral-400">View only</span>
+                            @endif
                             </div>
                         </td>
                     </tr>

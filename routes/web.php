@@ -48,7 +48,8 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 
-Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->group(function (): void {
+// Admin + Owner: read-only routes
+Route::middleware(['auth', \App\Http\Middleware\IsOwner::class])->prefix('admin')->group(function (): void {
     Route::get('/', [AdminController::class, 'dashboard']);
     Route::get('/notifications', [AdminController::class, 'getNotifications']);
     Route::get('/pesanan', [AdminController::class, 'orders']);
@@ -57,6 +58,14 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
     Route::get('/users', [AdminController::class, 'users']);
     Route::get('/pengaturan', [AdminController::class, 'settings']);
     Route::get('/laporan', [AdminController::class, 'analytics']);
+    Route::get('/kategori', [AdminController::class, 'categories']);
+});
+
+// Admin only: write routes
+Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->group(function (): void {
+    Route::post('/kategori', [AdminController::class, 'storeCategory']);
+    Route::patch('/kategori/{category}', [AdminController::class, 'updateCategory']);
+    Route::delete('/kategori/{category}', [AdminController::class, 'deleteCategory']);
 
     Route::post('/pesanan/{order}/verifikasi-pembayaran', [AdminController::class, 'verifyPayment']);
     Route::post('/pesanan/{order}/reminder-pickup', [AdminController::class, 'sendPickupReminder']);

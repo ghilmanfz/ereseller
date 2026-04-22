@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -246,6 +247,7 @@ class AdminController extends Controller
             'users' => $users,
             'currentQuery' => $request->string('q')->toString(),
             'adminCount' => User::query()->where('role', 'admin')->count(),
+            'ownerCount' => User::query()->where('role', 'owner')->count(),
             'customerCount' => User::query()->where('role', 'customer')->count(),
         ]);
     }
@@ -353,7 +355,7 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'whatsapp' => ['required', 'string', 'max:20', 'unique:users,whatsapp'],
             'address' => ['required', 'string', 'max:1000'],
-            'role' => ['required', 'in:admin,customer'],
+            'role' => ['required', 'in:admin,owner,customer'],
             'password' => ['required', 'string', 'min:8'],
         ]);
 
@@ -380,7 +382,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:1000'],
-            'role' => ['required', 'in:admin,customer'],
+            'role' => ['required', 'in:admin,owner,customer'],
         ]);
 
         $user->update($data);
@@ -410,14 +412,19 @@ class AdminController extends Controller
             'price' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
-            'image_url' => ['nullable', 'url'],
+            'image' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
 
         Product::query()->create([
             'category_id' => (int) $data['category_id'],
             'name' => $data['name'],
             'slug' => Str::slug($data['name']).'-'.Str::lower(Str::random(4)),
-            'image_url' => $data['image_url'] ?? 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=500&fit=crop',
+            'image_url' => $imagePath ? \Illuminate\Support\Facades\Storage::url($imagePath) : null,
             'description' => $data['description'] ?? '',
             'price' => (float) $data['price'],
             'compare_price' => (float) $data['price'],
@@ -437,8 +444,19 @@ class AdminController extends Controller
             'price' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
-            'image_url' => ['nullable', 'url'],
+            'image' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        $imageUrl = $product->image_url;
+        if ($request->hasFile('image')) {
+            // Delete old image if stored locally
+            if ($imageUrl && str_starts_with($imageUrl, '/storage/')) {
+                $oldPath = str_replace('/storage/', '', $imageUrl);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            $imagePath = $request->file('image')->store('products', 'public');
+            $imageUrl = \Illuminate\Support\Facades\Storage::url($imagePath);
+        }
 
         $product->update([
             'category_id' => (int) $data['category_id'],
@@ -446,7 +464,7 @@ class AdminController extends Controller
             'price' => (float) $data['price'],
             'stock' => (int) $data['stock'],
             'description' => $data['description'] ?? '',
-            'image_url' => $data['image_url'] ?? $product->image_url,
+            'image_url' => $imageUrl,
         ]);
 
         return back()->with('success', 'Produk berhasil diperbarui.');
@@ -478,4 +496,51 @@ class AdminController extends Controller
 
         return back()->with('success', 'Pengaturan berhasil disimpan.');
     }
+
+    public function categories(): View
+    {
+        return view('pages.admin.categories', [
+            'categories' => Category::query()->withCount('products')->orderBy('name')->get(),
+        ]);
+    }
+
+    public function storeCategory(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
+        ]);
+
+        Category::query()->create([
+            'name' => $data['name'],
+            'slug' => Str::slug($data['name']),
+        ]);
+
+        return back()->with('success', 'Kategori berhasil ditambahkan.');
+    }
+
+    public function updateCategory(Request $request, Category $category): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name,'.$category->id],
+        ]);
+
+        $category->update([
+            'name' => $data['name'],
+            'slug' => Str::slug($data['name']),
+        ]);
+
+        return back()->with('success', 'Kategori berhasil diperbarui.');
+    }
+
+    public function deleteCategory(Category $category): RedirectResponse
+    {
+        if ($category->products()->count() > 0) {
+            return back()->with('error', 'Kategori tidak bisa dihapus karena masih memiliki produk.');
+        }
+
+        $category->delete();
+
+        return back()->with('success', 'Kategori berhasil dihapus.');
+    }
+
 }

@@ -49,7 +49,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        if ($user->role === 'admin') {
+        if (in_array($user->role, ['admin', 'owner'], true)) {
             return redirect()->intended('/admin');
         }
 
@@ -141,16 +141,24 @@ class AuthController extends Controller
 
     public function devLogin(Request $request, string $role): RedirectResponse
     {
-        if (! in_array($role, ['admin', 'customer'], true)) {
+        if (! in_array($role, ['admin', 'owner', 'customer'], true)) {
             abort(404);
         }
 
         $user = User::query()->where('role', $role)->first();
 
         if (! $user) {
-            $seedWhatsapp = $role === 'admin' ? '081111111111' : '082222222222';
+            $seedWhatsapp = match($role) {
+                'admin'    => '081111111111',
+                'owner'    => '083333333333',
+                default    => '082222222222',
+            };
             $user = User::create([
-                'name' => $role === 'admin' ? 'Admin Sintia' : 'Customer Demo',
+                'name' => match($role) {
+                    'admin'  => 'Admin Sintia',
+                    'owner'  => 'Owner Demo',
+                    default  => 'Customer Demo',
+                },
                 'whatsapp' => $seedWhatsapp,
                 'address' => 'Parungpanjang, Bogor',
                 'email' => $seedWhatsapp.'@sr12.local',
@@ -163,7 +171,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect($role === 'admin' ? '/admin' : '/katalog');
+        return redirect(in_array($role, ['admin', 'owner'], true) ? '/admin' : '/katalog');
     }
 
     private function normalizeWhatsapp(string $whatsapp): string
