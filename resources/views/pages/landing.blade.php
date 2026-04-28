@@ -17,7 +17,7 @@
                     <span class="text-xs font-semibold text-primary-700">Distributor Resmi SR12 Herbal Skincare</span>
                 </div>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-serif font-black text-neutral-900 leading-[1.1]">
-                    Cantik Alami<br>dengan <span class="text-primary-600">Sentuhan<br>Herbal</span> Terbaik
+                    beauty is not a dream<br><span class="text-primary-600">bringing back your beauty</span>
                 </h1>
                 <p class="mt-6 text-base sm:text-lg text-neutral-500 leading-relaxed max-w-lg">
                     Temukan rahasia kulit sehat dan bercahaya dengan rangkaian produk SR12 yang telah teruji secara dermatologis dan bersertifikat BPOM.
@@ -48,7 +48,7 @@
             <div class="relative animate-fade-in-up" style="animation-delay: 0.2s">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary-900/10">
                     <div class="aspect-[4/5] bg-gradient-to-br from-primary-100 to-primary-200">
-                        <img src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=600&h=750&fit=crop" alt="SR12 Skincare" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/landing/hero-sr12-catalogue.jpeg') }}" alt="SR12 Product Catalogue" class="w-full h-full object-cover">
                     </div>
                 </div>
                 <div class="absolute -bottom-4 left-6 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3 animate-float">
