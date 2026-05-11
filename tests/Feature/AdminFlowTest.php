@@ -806,6 +806,43 @@ class AdminFlowTest extends TestCase
         $response->assertSee('/storage/settings/current-hero.jpg', false);
     }
 
+    public function test_settings_page_uses_old_featured_product_ids_when_old_input_is_csv(): void
+    {
+        $oldInputProduct = Product::query()->create([
+            'category_id' => $this->category->id,
+            'name' => 'Old Input Serum',
+            'slug' => 'old-input-serum',
+            'image_url' => 'https://example.com/old-input.jpg',
+            'description' => 'Selected from old CSV input',
+            'price' => 150000,
+            'compare_price' => 150000,
+            'rating' => 4.5,
+            'stock' => 8,
+            'is_active' => true,
+        ]);
+
+        AppSetting::setValue('featured_product_ids', (string) $this->product->id);
+
+        $response = $this
+            ->actingAs($this->admin)
+            ->withSession([
+                '_old_input' => [
+                    'featured_product_ids' => (string) $oldInputProduct->id,
+                ],
+            ])
+            ->get('/admin/pengaturan');
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+        preg_match('/<input\s+[^>]*name="featured_product_ids\[\]"[^>]*value="'.$oldInputProduct->id.'"[^>]*>/m', $content, $oldInputMatch);
+        preg_match('/<input\s+[^>]*name="featured_product_ids\[\]"[^>]*value="'.$this->product->id.'"[^>]*>/m', $content, $settingsInputMatch);
+
+        $this->assertNotEmpty($oldInputMatch);
+        $this->assertNotEmpty($settingsInputMatch);
+        $this->assertStringContainsString('checked', $oldInputMatch[0]);
+        $this->assertStringNotContainsString('checked', $settingsInputMatch[0]);
+    }
+
     public function test_storefront_renders_configured_branding_in_navbar_and_footer(): void
     {
         AppSetting::setValue('store_name', 'Glow Sintia Store');

@@ -4,10 +4,10 @@
 
 @section('content')
 @php
-    $oldFeaturedProductIds = old('featured_product_ids');
+    $oldFeaturedProductIds = old('featured_product_ids', $settings['featured_product_ids'] ?? '');
     $selectedFeaturedProductIds = collect(is_array($oldFeaturedProductIds)
         ? $oldFeaturedProductIds
-        : explode(',', (string) ($settings['featured_product_ids'] ?? '')))
+        : explode(',', (string) $oldFeaturedProductIds))
         ->map(fn ($id) => (string) trim((string) $id))
         ->filter()
         ->all();
