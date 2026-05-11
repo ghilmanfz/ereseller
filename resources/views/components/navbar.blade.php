@@ -11,12 +11,16 @@
         <div class="flex items-center justify-between h-16">
             {{-- Logo --}}
             <a href="/" class="flex items-center gap-2 group">
+                @if(! empty($storeLogo))
+                <img src="{{ $storeLogo }}" alt="{{ $storeName }} logo" class="w-9 h-9 rounded-xl object-cover shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/30 transition-shadow">
+                @else
                 <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-shadow">
                     <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
                     </svg>
                 </div>
-                <span class="text-lg font-bold text-primary-700 tracking-tight">SINTIA SR12</span>
+                @endif
+                <span class="text-lg font-bold text-primary-700 tracking-tight">{{ $storeName }}</span>
             </a>
 
             {{-- Desktop Nav Links --}}

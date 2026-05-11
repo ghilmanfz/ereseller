@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="@yield('meta_description', 'SINTIA SR12 Distributor - Distributor Resmi SR12 Skincare Herbal Terpercaya di Parungpanjang. Belanja mudah, aman, dan terpercaya.')">
-    <title>@yield('title', 'SINTIA SR12 Distributor') - Distributor Resmi SR12 Parungpanjang</title>
+    <title>@yield('title', $storeName ?? 'SINTIA SR12 Distributor') - Distributor Resmi SR12 Parungpanjang</title>
 
     {{-- Favicon --}}
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><text y='32' font-size='32'>🌸</text></svg>">

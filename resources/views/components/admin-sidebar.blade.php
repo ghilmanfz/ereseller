@@ -3,10 +3,14 @@
     {{-- Logo --}}
     <div class="h-16 flex items-center px-5 border-b border-neutral-100">
         <a href="/admin" class="flex items-center gap-2">
+            @if(! empty($storeLogo))
+            <img src="{{ $storeLogo }}" alt="{{ $storeName }} logo" class="w-8 h-8 rounded-xl object-cover">
+            @else
             <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
                 <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
             </div>
-            <span class="text-base font-bold text-primary-700">SR12 Sintia</span>
+            @endif
+            <span class="text-base font-bold text-primary-700">{{ $storeName }}</span>
         </a>
     </div>
 

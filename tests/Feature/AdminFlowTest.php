@@ -779,6 +779,62 @@ class AdminFlowTest extends TestCase
         $response->assertViewIs('pages.admin.settings');
     }
 
+    public function test_settings_page_renders_branding_landing_and_featured_product_controls(): void
+    {
+        AppSetting::setValue('store_logo', '/storage/settings/current-logo.png');
+        AppSetting::setValue('landing_hero_image', '/storage/settings/current-hero.jpg');
+        AppSetting::setValue('featured_products_mode', 'manual');
+        AppSetting::setValue('featured_product_ids', (string) $this->product->id);
+
+        $response = $this->actingAs($this->admin)->get('/admin/pengaturan');
+
+        $response->assertStatus(200);
+        $response->assertSee('enctype="multipart/form-data"', false);
+        $response->assertSee('Logo Toko');
+        $response->assertSee('Konten Landing Page');
+        $response->assertSee('Produk Terlaris Landing Page');
+        $response->assertSee('name="landing_hero_badge"', false);
+        $response->assertSee('name="landing_cta_secondary_button_text"', false);
+        $response->assertSee('name="featured_products_mode"', false);
+        $response->assertSee('value="manual"', false);
+        $response->assertSee('name="featured_product_ids[]"', false);
+        $response->assertSee('value="'.$this->product->id.'"', false);
+        $response->assertSee('Test Product');
+        $response->assertSee('Stok: 50');
+        $response->assertSee('Rp 100.000');
+        $response->assertSee('/storage/settings/current-logo.png', false);
+        $response->assertSee('/storage/settings/current-hero.jpg', false);
+    }
+
+    public function test_storefront_renders_configured_branding_in_navbar_and_footer(): void
+    {
+        AppSetting::setValue('store_name', 'Glow Sintia Store');
+        AppSetting::setValue('store_logo', '/storage/settings/glow-logo.png');
+        AppSetting::setValue('pickup_address', 'Jl. Mawar No. 77, Bogor');
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee('Glow Sintia Store');
+        $response->assertSee('/storage/settings/glow-logo.png', false);
+        $response->assertSee('Jl. Mawar No. 77, Bogor');
+        $response->assertDontSee('SINTIA SR12</span>', false);
+    }
+
+    public function test_admin_layout_renders_configured_branding_in_sidebar_and_title_area(): void
+    {
+        AppSetting::setValue('store_name', 'Admin Glow Store');
+        AppSetting::setValue('store_logo', '/storage/settings/admin-logo.png');
+
+        $response = $this->actingAs($this->admin)->get('/admin');
+
+        $response->assertStatus(200);
+        $response->assertSee('<title>Dashboard - Admin Glow Store</title>', false);
+        $response->assertSee('Admin Glow Store');
+        $response->assertSee('/storage/settings/admin-logo.png', false);
+        $response->assertDontSee('SR12 Sintia</span>', false);
+    }
+
     // ==================== STATUS CHANGE TESTS (Non-Monoton) ====================
 
     public function test_admin_can_change_order_status_with_valid_transition(): void
