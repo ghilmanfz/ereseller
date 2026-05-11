@@ -397,6 +397,124 @@ class AdminFlowTest extends TestCase
         $response->assertSessionHasErrors('landing_hero_image');
     }
 
+    public function test_admin_cannot_upload_store_logo_larger_than_two_megabytes(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'featured_products_mode' => 'default',
+            'store_logo' => UploadedFile::fake()->image('logo.png', 200, 200)->size(2049),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('store_logo');
+    }
+
+    public function test_admin_replacing_setting_images_deletes_old_public_files(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('settings/old-logo.png', 'old logo');
+        Storage::disk('public')->put('settings/old-hero.jpg', 'old hero');
+        AppSetting::setValue('store_logo', '/storage/settings/old-logo.png');
+        AppSetting::setValue('landing_hero_image', '/storage/settings/old-hero.jpg');
+
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'featured_products_mode' => 'default',
+            'store_logo' => UploadedFile::fake()->image('new-logo.png', 200, 200),
+            'landing_hero_image' => UploadedFile::fake()->image('new-hero.jpg', 900, 1200),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('success');
+
+        Storage::disk('public')->assertMissing('settings/old-logo.png');
+        Storage::disk('public')->assertMissing('settings/old-hero.jpg');
+
+        $logoPath = str_replace('/storage/', '', AppSetting::getValue('store_logo'));
+        $heroPath = str_replace('/storage/', '', AppSetting::getValue('landing_hero_image'));
+
+        Storage::disk('public')->assertExists($logoPath);
+        Storage::disk('public')->assertExists($heroPath);
+    }
+
+    public function test_manual_featured_product_ids_are_filtered_to_active_products_and_capped_at_four(): void
+    {
+        $activeProducts = collect();
+
+        foreach (range(1, 5) as $number) {
+            $activeProducts->push(Product::query()->create([
+                'category_id' => $this->category->id,
+                'name' => 'Featured Product '.$number,
+                'slug' => 'featured-product-'.$number,
+                'image_url' => 'https://example.com/featured-'.$number.'.jpg',
+                'description' => 'Featured product '.$number,
+                'price' => 100000 + $number,
+                'compare_price' => 120000 + $number,
+                'rating' => 4.5,
+                'stock' => 10,
+                'is_active' => true,
+            ]));
+        }
+
+        $inactiveProduct = Product::query()->create([
+            'category_id' => $this->category->id,
+            'name' => 'Inactive Featured Product',
+            'slug' => 'inactive-featured-product',
+            'image_url' => 'https://example.com/inactive-featured.jpg',
+            'description' => 'Inactive featured product',
+            'price' => 150000,
+            'compare_price' => 175000,
+            'rating' => 4.5,
+            'stock' => 10,
+            'is_active' => false,
+        ]);
+
+        $selectedIds = [
+            $activeProducts[0]->id,
+            $inactiveProduct->id,
+            $activeProducts[1]->id,
+            $activeProducts[2]->id,
+            $activeProducts[3]->id,
+            $activeProducts[4]->id,
+        ];
+
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'featured_products_mode' => 'manual',
+            'featured_product_ids' => $selectedIds,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('success');
+
+        $expectedIds = $activeProducts
+            ->take(4)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->implode(',');
+
+        $this->assertSame($expectedIds, AppSetting::getValue('featured_product_ids'));
+    }
+
     public function test_app_setting_returns_default_when_key_is_missing(): void
     {
         $this->assertSame('SR12 Sintia', AppSetting::getValue('store_name', 'SR12 Sintia'));
