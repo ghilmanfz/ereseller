@@ -359,6 +359,44 @@ class AdminFlowTest extends TestCase
         Storage::disk('public')->assertExists($heroPath);
     }
 
+    public function test_admin_can_save_default_featured_product_mode(): void
+    {
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'featured_products_mode' => 'default',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('success');
+
+        $this->assertSame('default', AppSetting::getValue('featured_products_mode'));
+    }
+
+    public function test_admin_cannot_upload_hero_image_larger_than_two_megabytes(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'featured_products_mode' => 'default',
+            'landing_hero_image' => UploadedFile::fake()->image('hero.jpg', 900, 1200)->size(2049),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('landing_hero_image');
+    }
+
     public function test_app_setting_returns_default_when_key_is_missing(): void
     {
         $this->assertSame('SR12 Sintia', AppSetting::getValue('store_name', 'SR12 Sintia'));

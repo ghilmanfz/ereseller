@@ -285,7 +285,7 @@ class AdminController extends Controller
             'landing_cta_description' => AppSetting::getValue('landing_cta_description', 'Dapatkan promo dan rekomendasi produk langsung dari admin.'),
             'landing_cta_primary_button_text' => AppSetting::getValue('landing_cta_primary_button_text', 'Daftar Sekarang'),
             'landing_cta_secondary_button_text' => AppSetting::getValue('landing_cta_secondary_button_text', 'Pelajari Produk'),
-            'featured_products_mode' => AppSetting::getValue('featured_products_mode', 'automatic'),
+            'featured_products_mode' => AppSetting::getValue('featured_products_mode', 'default'),
             'featured_product_ids' => AppSetting::getValue('featured_product_ids', ''),
         ];
     }
@@ -522,11 +522,11 @@ class AdminController extends Controller
             'landing_cta_description' => ['nullable', 'string', 'max:1000'],
             'landing_cta_primary_button_text' => ['nullable', 'string', 'max:255'],
             'landing_cta_secondary_button_text' => ['nullable', 'string', 'max:255'],
-            'featured_products_mode' => ['nullable', 'in:automatic,manual'],
+            'featured_products_mode' => ['nullable', 'in:default,manual'],
             'featured_product_ids' => ['nullable', 'array'],
             'featured_product_ids.*' => ['integer', 'exists:products,id'],
             'store_logo' => ['nullable', 'image', 'max:2048'],
-            'landing_hero_image' => ['nullable', 'image', 'max:4096'],
+            'landing_hero_image' => ['nullable', 'image', 'max:2048'],
         ]);
 
         $currentSettings = $this->settingsPayload();
