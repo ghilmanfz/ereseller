@@ -9,7 +9,9 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminFlowTest extends TestCase
@@ -313,6 +315,48 @@ class AdminFlowTest extends TestCase
         $this->assertEquals('SR12 Sintia Updated', AppSetting::getValue('store_name'));
         $this->assertEquals('081234567890', AppSetting::getValue('store_whatsapp'));
         $this->assertEquals('Jl. New Address No. 123', AppSetting::getValue('pickup_address'));
+    }
+
+    public function test_admin_can_save_branding_landing_images_and_featured_product_settings(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia Updated',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'landing_hero_badge' => 'Distributor Resmi SR12',
+            'landing_hero_title' => 'Kulit Sehat Setiap Hari',
+            'landing_hero_highlight' => 'bersama SR12 Sintia',
+            'landing_hero_description' => 'Rangkaian skincare herbal pilihan untuk pelanggan Parungpanjang.',
+            'landing_primary_button_text' => 'Belanja Produk',
+            'landing_secondary_button_text' => 'Lihat Katalog',
+            'landing_cta_title' => 'Siap Merawat Kulitmu?',
+            'landing_cta_description' => 'Dapatkan promo dan rekomendasi produk langsung dari admin.',
+            'landing_cta_primary_button_text' => 'Daftar Sekarang',
+            'landing_cta_secondary_button_text' => 'Pelajari Produk',
+            'featured_products_mode' => 'manual',
+            'featured_product_ids' => [$this->product->id],
+            'store_logo' => UploadedFile::fake()->image('logo.png', 200, 200),
+            'landing_hero_image' => UploadedFile::fake()->image('hero.jpg', 900, 1200),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertSame('SR12 Sintia Updated', AppSetting::getValue('store_name'));
+        $this->assertSame('Kulit Sehat Setiap Hari', AppSetting::getValue('landing_hero_title'));
+        $this->assertSame('manual', AppSetting::getValue('featured_products_mode'));
+        $this->assertSame((string) $this->product->id, AppSetting::getValue('featured_product_ids'));
+
+        $logoPath = str_replace('/storage/', '', AppSetting::getValue('store_logo'));
+        $heroPath = str_replace('/storage/', '', AppSetting::getValue('landing_hero_image'));
+
+        Storage::disk('public')->assertExists($logoPath);
+        Storage::disk('public')->assertExists($heroPath);
     }
 
     public function test_app_setting_returns_default_when_key_is_missing(): void

@@ -255,15 +255,39 @@ class AdminController extends Controller
     public function settings(): View
     {
         return view('pages.admin.settings', [
-            'settings' => [
-                'store_name' => AppSetting::getValue('store_name', 'SR12 Sintia'),
-                'store_whatsapp' => AppSetting::getValue('store_whatsapp', '081111111111'),
-                'pickup_address' => AppSetting::getValue('pickup_address', 'Parungpanjang, Bogor'),
-                'pickup_reminder_template' => AppSetting::getValue('pickup_reminder_template', 'Pesanan Anda sudah siap diambil di toko SR12.'),
-                            'bank_account_number' => AppSetting::getValue('bank_account_number', ''),
-                            'ewallet_number' => AppSetting::getValue('ewallet_number', ''),
-            ],
+            'settings' => $this->settingsPayload(),
+            'activeProducts' => Product::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->select(['id', 'name', 'price', 'stock', 'image_url'])
+                ->get(),
         ]);
+    }
+
+    private function settingsPayload(): array
+    {
+        return [
+            'store_name' => AppSetting::getValue('store_name', 'SR12 Sintia'),
+            'store_whatsapp' => AppSetting::getValue('store_whatsapp', '081111111111'),
+            'pickup_address' => AppSetting::getValue('pickup_address', 'Parungpanjang, Bogor'),
+            'pickup_reminder_template' => AppSetting::getValue('pickup_reminder_template', 'Pesanan Anda sudah siap diambil di toko SR12.'),
+            'bank_account_number' => AppSetting::getValue('bank_account_number', ''),
+            'ewallet_number' => AppSetting::getValue('ewallet_number', ''),
+            'store_logo' => AppSetting::getValue('store_logo', ''),
+            'landing_hero_badge' => AppSetting::getValue('landing_hero_badge', 'Distributor Resmi SR12'),
+            'landing_hero_title' => AppSetting::getValue('landing_hero_title', 'Kulit Sehat Setiap Hari'),
+            'landing_hero_highlight' => AppSetting::getValue('landing_hero_highlight', 'bersama SR12 Sintia'),
+            'landing_hero_description' => AppSetting::getValue('landing_hero_description', 'Rangkaian skincare herbal pilihan untuk pelanggan Parungpanjang.'),
+            'landing_primary_button_text' => AppSetting::getValue('landing_primary_button_text', 'Belanja Produk'),
+            'landing_secondary_button_text' => AppSetting::getValue('landing_secondary_button_text', 'Lihat Katalog'),
+            'landing_hero_image' => AppSetting::getValue('landing_hero_image', ''),
+            'landing_cta_title' => AppSetting::getValue('landing_cta_title', 'Siap Merawat Kulitmu?'),
+            'landing_cta_description' => AppSetting::getValue('landing_cta_description', 'Dapatkan promo dan rekomendasi produk langsung dari admin.'),
+            'landing_cta_primary_button_text' => AppSetting::getValue('landing_cta_primary_button_text', 'Daftar Sekarang'),
+            'landing_cta_secondary_button_text' => AppSetting::getValue('landing_cta_secondary_button_text', 'Pelajari Produk'),
+            'featured_products_mode' => AppSetting::getValue('featured_products_mode', 'automatic'),
+            'featured_product_ids' => AppSetting::getValue('featured_product_ids', ''),
+        ];
     }
 
     public function analytics(): View
@@ -486,15 +510,100 @@ class AdminController extends Controller
             'store_whatsapp' => ['required', 'string', 'max:20'],
             'pickup_address' => ['required', 'string', 'max:1000'],
             'pickup_reminder_template' => ['required', 'string', 'max:2000'],
-                    'bank_account_number' => ['nullable', 'string', 'max:255'],
-                    'ewallet_number' => ['nullable', 'string', 'max:20'],
+            'bank_account_number' => ['nullable', 'string', 'max:255'],
+            'ewallet_number' => ['nullable', 'string', 'max:20'],
+            'landing_hero_badge' => ['nullable', 'string', 'max:255'],
+            'landing_hero_title' => ['nullable', 'string', 'max:255'],
+            'landing_hero_highlight' => ['nullable', 'string', 'max:255'],
+            'landing_hero_description' => ['nullable', 'string', 'max:1000'],
+            'landing_primary_button_text' => ['nullable', 'string', 'max:255'],
+            'landing_secondary_button_text' => ['nullable', 'string', 'max:255'],
+            'landing_cta_title' => ['nullable', 'string', 'max:255'],
+            'landing_cta_description' => ['nullable', 'string', 'max:1000'],
+            'landing_cta_primary_button_text' => ['nullable', 'string', 'max:255'],
+            'landing_cta_secondary_button_text' => ['nullable', 'string', 'max:255'],
+            'featured_products_mode' => ['nullable', 'in:automatic,manual'],
+            'featured_product_ids' => ['nullable', 'array'],
+            'featured_product_ids.*' => ['integer', 'exists:products,id'],
+            'store_logo' => ['nullable', 'image', 'max:2048'],
+            'landing_hero_image' => ['nullable', 'image', 'max:4096'],
         ]);
 
-        foreach ($data as $key => $value) {
-            AppSetting::setValue($key, $value);
+        $currentSettings = $this->settingsPayload();
+        $scalarKeys = [
+            'store_name',
+            'store_whatsapp',
+            'pickup_address',
+            'pickup_reminder_template',
+            'bank_account_number',
+            'ewallet_number',
+            'landing_hero_badge',
+            'landing_hero_title',
+            'landing_hero_highlight',
+            'landing_hero_description',
+            'landing_primary_button_text',
+            'landing_secondary_button_text',
+            'landing_cta_title',
+            'landing_cta_description',
+            'landing_cta_primary_button_text',
+            'landing_cta_secondary_button_text',
+        ];
+
+        foreach ($scalarKeys as $key) {
+            $value = array_key_exists($key, $data) ? ($data[$key] ?? '') : ($currentSettings[$key] ?? '');
+
+            AppSetting::setValue($key, (string) $value);
+        }
+
+        AppSetting::setValue('featured_products_mode', $data['featured_products_mode'] ?? $currentSettings['featured_products_mode']);
+        AppSetting::setValue(
+            'featured_product_ids',
+            $request->has('featured_product_ids') ? $this->validatedFeaturedProductIds($request) : $currentSettings['featured_product_ids']
+        );
+
+        foreach (['store_logo', 'landing_hero_image'] as $field) {
+            if ($request->hasFile($field)) {
+                AppSetting::setValue($field, $this->storeSettingImage($request, $field));
+            }
         }
 
         return back()->with('success', 'Pengaturan berhasil disimpan.');
+    }
+
+    private function validatedFeaturedProductIds(Request $request): string
+    {
+        $selectedIds = collect($request->input('featured_product_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedIds->isEmpty()) {
+            return '';
+        }
+
+        $activeIds = Product::query()
+            ->where('is_active', true)
+            ->whereIn('id', $selectedIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+
+        return $selectedIds
+            ->filter(fn (int $id) => $activeIds->contains($id))
+            ->take(4)
+            ->implode(',');
+    }
+
+    private function storeSettingImage(Request $request, string $field): string
+    {
+        $oldUrl = AppSetting::getValue($field, '');
+        $path = $request->file($field)->store('settings', 'public');
+
+        if ($oldUrl && str_starts_with($oldUrl, '/storage/')) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $oldUrl));
+        }
+
+        return Storage::url($path);
     }
 
     public function categories(): View
