@@ -443,6 +443,14 @@ class AdminFlowTest extends TestCase
         $response->assertSee($topProduct->name);
     }
 
+    public function test_landing_page_preserves_default_cta_responsive_line_break(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee('Bergabunglah Dengan Ribuan Reseller &amp;<br class="hidden sm:block"> Konsumen Loyal SR12 Parungpanjang', false);
+    }
+
     public function test_admin_cannot_upload_hero_image_larger_than_two_megabytes(): void
     {
         Storage::fake('public');

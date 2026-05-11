@@ -137,8 +137,13 @@
             <div class="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
             <div class="absolute bottom-0 right-0 w-48 h-48 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
             <div class="relative z-10">
+                @php($ctaTitleParts = explode(' & ', $landingSettings['cta_title'], 2))
                 <h2 class="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
-                    {{ $landingSettings['cta_title'] }}
+                    @if(count($ctaTitleParts) === 2)
+                        {{ $ctaTitleParts[0] }} {{ '&' }}<br class="hidden sm:block"> {{ $ctaTitleParts[1] }}
+                    @else
+                        {{ $landingSettings['cta_title'] }}
+                    @endif
                 </h2>
                 <p class="mt-4 text-primary-200 max-w-xl mx-auto text-sm md:text-base">{{ $landingSettings['cta_description'] }}</p>
                 <div class="mt-8 flex flex-wrap justify-center gap-4">
