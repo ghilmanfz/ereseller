@@ -14,19 +14,19 @@
             <div class="animate-fade-in-up">
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-100/80 backdrop-blur-sm rounded-full mb-6">
                     <svg class="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                    <span class="text-xs font-semibold text-primary-700">Distributor Resmi SR12 Herbal Skincare</span>
+                    <span class="text-xs font-semibold text-primary-700">{{ $landingSettings['hero_badge'] }}</span>
                 </div>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-serif font-black text-neutral-900 leading-[1.1]">
-                    beauty is not a dream<br><span class="text-primary-600">bringing back your beauty</span>
+                    {{ $landingSettings['hero_title'] }}<br><span class="text-primary-600">{{ $landingSettings['hero_highlight'] }}</span>
                 </h1>
                 <p class="mt-6 text-base sm:text-lg text-neutral-500 leading-relaxed max-w-lg">
-                    Temukan rahasia kulit sehat dan bercahaya dengan rangkaian produk SR12 yang telah teruji secara dermatologis dan bersertifikat BPOM.
+                    {{ $landingSettings['hero_description'] }}
                 </p>
                 <div class="mt-8 flex flex-wrap gap-4">
-                    <a href="/katalog" class="btn-primary text-sm">Mulai Belanja Sekarang
+                    <a href="/katalog" class="btn-primary text-sm">{{ $landingSettings['primary_button_text'] }}
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                     </a>
-                    <a href="/katalog" class="btn-outline text-sm">Lihat Katalog</a>
+                    <a href="/katalog" class="btn-outline text-sm">{{ $landingSettings['secondary_button_text'] }}</a>
                 </div>
                 <div class="mt-10 flex items-center gap-4">
                     <div class="flex -space-x-2">
@@ -48,7 +48,7 @@
             <div class="relative animate-fade-in-up" style="animation-delay: 0.2s">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary-900/10">
                     <div class="aspect-[4/5] bg-gradient-to-br from-primary-100 to-primary-200">
-                        <img src="{{ asset('images/landing/hero-sr12-catalogue.jpeg') }}" alt="SR12 Product Catalogue" class="w-full h-full object-cover">
+                        <img src="{{ $landingSettings['hero_image'] }}" alt="SR12 Product Catalogue" class="w-full h-full object-cover">
                     </div>
                 </div>
                 <div class="absolute -bottom-4 left-6 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3 animate-float">
@@ -138,12 +138,12 @@
             <div class="absolute bottom-0 right-0 w-48 h-48 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
             <div class="relative z-10">
                 <h2 class="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
-                    Bergabunglah Dengan Ribuan Reseller &<br class="hidden sm:block"> Konsumen Loyal SR12 Parungpanjang
+                    {{ $landingSettings['cta_title'] }}
                 </h2>
-                <p class="mt-4 text-primary-200 max-w-xl mx-auto text-sm md:text-base">Dapatkan informasi promo eksklusif, tips kecantikan harian, dan penawaran khusus langsung di genggaman Anda.</p>
+                <p class="mt-4 text-primary-200 max-w-xl mx-auto text-sm md:text-base">{{ $landingSettings['cta_description'] }}</p>
                 <div class="mt-8 flex flex-wrap justify-center gap-4">
-                    <a href="/register" class="inline-flex items-center gap-2 px-7 py-3 bg-white text-primary-700 font-semibold rounded-full hover:bg-primary-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">Daftar Sekarang</a>
-                    <a href="/katalog" class="inline-flex items-center gap-2 px-7 py-3 border-2 border-white/40 text-white font-semibold rounded-full hover:bg-white/10 transition-all text-sm">Pelajari Produk</a>
+                    <a href="/register" class="inline-flex items-center gap-2 px-7 py-3 bg-white text-primary-700 font-semibold rounded-full hover:bg-primary-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">{{ $landingSettings['cta_primary_button_text'] }}</a>
+                    <a href="/katalog" class="inline-flex items-center gap-2 px-7 py-3 border-2 border-white/40 text-white font-semibold rounded-full hover:bg-white/10 transition-all text-sm">{{ $landingSettings['cta_secondary_button_text'] }}</a>
                 </div>
             </div>
         </div>

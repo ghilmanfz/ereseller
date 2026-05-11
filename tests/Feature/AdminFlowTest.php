@@ -378,6 +378,71 @@ class AdminFlowTest extends TestCase
         $this->assertSame('default', AppSetting::getValue('featured_products_mode'));
     }
 
+    public function test_landing_page_renders_custom_landing_settings_and_manual_featured_products(): void
+    {
+        $manualProduct = Product::query()->create([
+            'category_id' => $this->category->id,
+            'name' => 'Manual Glow Serum',
+            'slug' => 'manual-glow-serum',
+            'image_url' => 'https://example.com/manual.jpg',
+            'description' => 'Manual featured product',
+            'price' => 175000,
+            'compare_price' => 175000,
+            'rating' => 3.5,
+            'stock' => 20,
+            'is_active' => true,
+        ]);
+
+        AppSetting::setValue('landing_hero_badge', 'Badge Custom');
+        AppSetting::setValue('landing_hero_title', 'Judul Landing Custom');
+        AppSetting::setValue('landing_hero_highlight', 'Highlight Custom');
+        AppSetting::setValue('landing_hero_description', 'Deskripsi landing custom untuk pelanggan.');
+        AppSetting::setValue('landing_primary_button_text', 'Belanja Custom');
+        AppSetting::setValue('landing_secondary_button_text', 'Katalog Custom');
+        AppSetting::setValue('landing_hero_image', '/storage/settings/custom-hero.jpg');
+        AppSetting::setValue('landing_cta_title', 'CTA Custom');
+        AppSetting::setValue('landing_cta_description', 'Deskripsi CTA custom.');
+        AppSetting::setValue('landing_cta_primary_button_text', 'Daftar Custom');
+        AppSetting::setValue('landing_cta_secondary_button_text', 'Produk Custom');
+        AppSetting::setValue('featured_products_mode', 'manual');
+        AppSetting::setValue('featured_product_ids', (string) $manualProduct->id);
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee('Badge Custom');
+        $response->assertSee('Judul Landing Custom');
+        $response->assertSee('Highlight Custom');
+        $response->assertSee('Belanja Custom');
+        $response->assertSee('/storage/settings/custom-hero.jpg', false);
+        $response->assertSee('CTA Custom');
+        $response->assertSee('Manual Glow Serum');
+    }
+
+    public function test_landing_page_falls_back_to_default_featured_products_when_manual_selection_is_empty(): void
+    {
+        $topProduct = Product::query()->create([
+            'category_id' => $this->category->id,
+            'name' => 'Auto Top Product',
+            'slug' => 'auto-top-product',
+            'image_url' => 'https://example.com/top.jpg',
+            'description' => 'Automatic featured product',
+            'price' => 225000,
+            'compare_price' => 225000,
+            'rating' => 5,
+            'stock' => 15,
+            'is_active' => true,
+        ]);
+
+        AppSetting::setValue('featured_products_mode', 'manual');
+        AppSetting::setValue('featured_product_ids', '');
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee($topProduct->name);
+    }
+
     public function test_admin_cannot_upload_hero_image_larger_than_two_megabytes(): void
     {
         Storage::fake('public');
