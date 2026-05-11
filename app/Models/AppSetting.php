@@ -16,7 +16,9 @@ class AppSetting extends Model
 
     public static function getValue(string $key, string $default = ''): string
     {
-        return (string) static::query()->where('key', $key)->value('value') ?? $default;
+        $value = static::query()->where('key', $key)->value('value');
+
+        return $value === null ? $default : (string) $value;
     }
 
     public static function setValue(string $key, string $value): void

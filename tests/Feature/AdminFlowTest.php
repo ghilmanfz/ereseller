@@ -315,6 +315,11 @@ class AdminFlowTest extends TestCase
         $this->assertEquals('Jl. New Address No. 123', AppSetting::getValue('pickup_address'));
     }
 
+    public function test_app_setting_returns_default_when_key_is_missing(): void
+    {
+        $this->assertSame('SR12 Sintia', AppSetting::getValue('store_name', 'SR12 Sintia'));
+    }
+
     // ==================== USER MANAGEMENT TESTS ====================
 
     public function test_admin_can_create_new_user(): void
@@ -654,4 +659,3 @@ class AdminFlowTest extends TestCase
         $response->assertStatus(200);
     }
 }
-
