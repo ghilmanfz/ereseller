@@ -203,6 +203,7 @@
                     </div>
                     <div class="space-y-2">
                         <p class="text-xs text-neutral-500">Pilih maksimal 4 produk aktif. Jika mode manual aktif tetapi pilihan kosong, landing page memakai produk default.</p>
+                        <input type="hidden" name="featured_product_ids[]" value="">
                         @forelse($activeProducts as $product)
                             <label class="flex items-start gap-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50">
                                 <input

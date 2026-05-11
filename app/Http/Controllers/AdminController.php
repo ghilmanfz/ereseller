@@ -524,7 +524,7 @@ class AdminController extends Controller
             'landing_cta_secondary_button_text' => ['nullable', 'string', 'max:255'],
             'featured_products_mode' => ['nullable', 'in:default,manual'],
             'featured_product_ids' => ['nullable', 'array'],
-            'featured_product_ids.*' => ['integer', 'exists:products,id'],
+            'featured_product_ids.*' => ['nullable', 'integer', 'exists:products,id'],
             'store_logo' => ['nullable', 'image', 'max:2048'],
             'landing_hero_image' => ['nullable', 'image', 'max:2048'],
         ]);

@@ -588,6 +588,28 @@ class AdminFlowTest extends TestCase
         $this->assertSame($expectedIds, AppSetting::getValue('featured_product_ids'));
     }
 
+    public function test_admin_can_clear_manual_featured_products_with_empty_checkbox_sentinel(): void
+    {
+        AppSetting::setValue('featured_product_ids', (string) $this->product->id);
+
+        $response = $this->actingAs($this->admin)->post('/admin/pengaturan', [
+            'store_name' => 'SR12 Sintia',
+            'store_whatsapp' => '081234567890',
+            'pickup_address' => 'Jl. New Address No. 123',
+            'pickup_reminder_template' => 'Pesanan Anda sudah siap!',
+            'bank_account_number' => '1234567890',
+            'ewallet_number' => '081234567890',
+            'featured_products_mode' => 'manual',
+            'featured_product_ids' => [''],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('success');
+
+        $this->assertSame('', AppSetting::getValue('featured_product_ids'));
+    }
+
     public function test_app_setting_returns_default_when_key_is_missing(): void
     {
         $this->assertSame('SR12 Sintia', AppSetting::getValue('store_name', 'SR12 Sintia'));
