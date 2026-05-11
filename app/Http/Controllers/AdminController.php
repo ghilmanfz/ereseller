@@ -274,15 +274,15 @@ class AdminController extends Controller
             'bank_account_number' => AppSetting::getValue('bank_account_number', ''),
             'ewallet_number' => AppSetting::getValue('ewallet_number', ''),
             'store_logo' => AppSetting::getValue('store_logo', ''),
-            'landing_hero_badge' => AppSetting::getValue('landing_hero_badge', 'Distributor Resmi SR12'),
-            'landing_hero_title' => AppSetting::getValue('landing_hero_title', 'Kulit Sehat Setiap Hari'),
-            'landing_hero_highlight' => AppSetting::getValue('landing_hero_highlight', 'bersama SR12 Sintia'),
-            'landing_hero_description' => AppSetting::getValue('landing_hero_description', 'Rangkaian skincare herbal pilihan untuk pelanggan Parungpanjang.'),
-            'landing_primary_button_text' => AppSetting::getValue('landing_primary_button_text', 'Belanja Produk'),
+            'landing_hero_badge' => AppSetting::getValue('landing_hero_badge', 'Distributor Resmi SR12 Herbal Skincare'),
+            'landing_hero_title' => AppSetting::getValue('landing_hero_title', 'beauty is not a dream'),
+            'landing_hero_highlight' => AppSetting::getValue('landing_hero_highlight', 'bringing back your beauty'),
+            'landing_hero_description' => AppSetting::getValue('landing_hero_description', 'Temukan rahasia kulit sehat dan bercahaya dengan rangkaian produk SR12 yang telah teruji secara dermatologis dan bersertifikat BPOM.'),
+            'landing_primary_button_text' => AppSetting::getValue('landing_primary_button_text', 'Mulai Belanja Sekarang'),
             'landing_secondary_button_text' => AppSetting::getValue('landing_secondary_button_text', 'Lihat Katalog'),
-            'landing_hero_image' => AppSetting::getValue('landing_hero_image', ''),
-            'landing_cta_title' => AppSetting::getValue('landing_cta_title', 'Siap Merawat Kulitmu?'),
-            'landing_cta_description' => AppSetting::getValue('landing_cta_description', 'Dapatkan promo dan rekomendasi produk langsung dari admin.'),
+            'landing_hero_image' => AppSetting::getValue('landing_hero_image', asset('images/landing/hero-sr12-catalogue.jpeg')),
+            'landing_cta_title' => AppSetting::getValue('landing_cta_title', 'Bergabunglah Dengan Ribuan Reseller & Konsumen Loyal SR12 Parungpanjang'),
+            'landing_cta_description' => AppSetting::getValue('landing_cta_description', 'Dapatkan informasi promo eksklusif, tips kecantikan harian, dan penawaran khusus langsung di genggaman Anda.'),
             'landing_cta_primary_button_text' => AppSetting::getValue('landing_cta_primary_button_text', 'Daftar Sekarang'),
             'landing_cta_secondary_button_text' => AppSetting::getValue('landing_cta_secondary_button_text', 'Pelajari Produk'),
             'featured_products_mode' => AppSetting::getValue('featured_products_mode', 'default'),
@@ -525,6 +525,8 @@ class AdminController extends Controller
             'featured_products_mode' => ['nullable', 'in:default,manual'],
             'featured_product_ids' => ['nullable', 'array'],
             'featured_product_ids.*' => ['nullable', 'integer', 'exists:products,id'],
+            'featured_product_order' => ['nullable', 'array'],
+            'featured_product_order.*' => ['nullable', 'integer', 'min:1', 'max:99'],
             'store_logo' => ['nullable', 'image', 'max:2048'],
             'landing_hero_image' => ['nullable', 'image', 'max:2048'],
         ]);
@@ -582,14 +584,34 @@ class AdminController extends Controller
             return '';
         }
 
+        $selectedPositions = $selectedIds
+            ->flip()
+            ->map(fn (int $position) => $position);
+
         $activeIds = Product::query()
             ->where('is_active', true)
             ->whereIn('id', $selectedIds)
             ->pluck('id')
             ->map(fn ($id) => (int) $id);
 
-        return $selectedIds
+        $filteredIds = $selectedIds
             ->filter(fn (int $id) => $activeIds->contains($id))
+            ->values();
+
+        $orderInput = collect($request->input('featured_product_order', []))
+            ->mapWithKeys(fn ($order, $id) => [(int) $id => (int) $order])
+            ->filter(fn (int $order) => $order > 0);
+
+        if ($orderInput->isNotEmpty()) {
+            $filteredIds = $filteredIds
+                ->sort(function (int $a, int $b) use ($orderInput, $selectedPositions): int {
+                    return ($orderInput->get($a, PHP_INT_MAX) <=> $orderInput->get($b, PHP_INT_MAX))
+                        ?: ($selectedPositions->get($a, PHP_INT_MAX) <=> $selectedPositions->get($b, PHP_INT_MAX));
+                })
+                ->values();
+        }
+
+        return $filteredIds
             ->take(4)
             ->implode(',');
     }

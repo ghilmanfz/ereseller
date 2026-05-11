@@ -11,6 +11,13 @@
         ->map(fn ($id) => (string) trim((string) $id))
         ->filter()
         ->all();
+    $selectedFeaturedProductOrder = collect($selectedFeaturedProductIds)
+        ->values()
+        ->flip()
+        ->map(fn ($index) => $index + 1)
+        ->all();
+    $oldFeaturedProductOrder = old('featured_product_order', []);
+    $featuredProductOrderInput = is_array($oldFeaturedProductOrder) ? $oldFeaturedProductOrder : [];
     $featuredMode = old('featured_products_mode', $settings['featured_products_mode'] ?? 'default');
 @endphp
 
@@ -216,6 +223,16 @@
                                     <span class="block text-sm font-semibold text-neutral-800">{{ $product->name }}</span>
                                     <span class="block text-xs text-neutral-500">Stok: {{ $product->stock }} &middot; Rp {{ number_format((float) $product->price, 0, ',', '.') }}</span>
                                 </span>
+                                <span class="ml-auto flex shrink-0 items-center gap-2">
+                                    <span class="text-xs font-semibold text-neutral-500">Urutan</span>
+                                    <input
+                                        type="number"
+                                        name="featured_product_order[{{ $product->id }}]"
+                                        min="1"
+                                        max="4"
+                                        value="{{ $featuredProductOrderInput[$product->id] ?? $selectedFeaturedProductOrder[(string) $product->id] ?? '' }}"
+                                        class="w-16 rounded-lg border border-neutral-300 px-2 py-1 text-sm text-neutral-700 focus:border-primary-500 focus:ring-primary-500">
+                                </span>
                             </label>
                         @empty
                             <p class="text-sm text-neutral-500 p-3 border border-dashed border-neutral-200 rounded-xl">Belum ada produk aktif untuk dipilih.</p>
@@ -225,6 +242,12 @@
                         @endif
                         @if($errors->has('featured_product_ids.*'))
                             <p class="text-xs text-red-600 mt-1.5">{{ $errors->first('featured_product_ids.*') }}</p>
+                        @endif
+                        @if($errors->has('featured_product_order'))
+                            <p class="text-xs text-red-600 mt-1.5">{{ $errors->first('featured_product_order') }}</p>
+                        @endif
+                        @if($errors->has('featured_product_order.*'))
+                            <p class="text-xs text-red-600 mt-1.5">{{ $errors->first('featured_product_order.*') }}</p>
                         @endif
                     </div>
                 </div>
