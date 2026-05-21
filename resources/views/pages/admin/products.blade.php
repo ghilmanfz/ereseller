@@ -90,6 +90,11 @@
                                     @csrf
                                     <button class="px-2 py-1 text-xs border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50">Toggle</button>
                                 </form>
+                                <form id="delete-product-{{ $product->id }}" method="POST" action="/admin/produk/{{ $product->id }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" onclick="openDeleteModal('delete-product-{{ $product->id }}', 'Hapus produk ini? Tindakan ini tidak bisa dibatalkan.')" class="px-2 py-1 text-xs border border-red-300 text-red-700 rounded-lg hover:bg-red-50">Hapus</button>
+                                </form>
                             </div>
                             @else
                             <span class="text-xs text-neutral-400">-</span>
@@ -103,6 +108,18 @@
     </div>
 
 
+</div>
+
+{{-- Delete Confirmation Modal --}}
+<div id="delete-modal" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-sm w-full p-6">
+        <h3 class="text-base font-bold text-neutral-800">Konfirmasi Hapus</h3>
+        <p id="delete-modal-message" class="text-sm text-neutral-600 mt-2">Data akan dihapus permanen.</p>
+        <div class="flex gap-2 pt-5">
+            <button type="button" onclick="closeDeleteModal()" class="btn-outline flex-1 text-sm">Batal</button>
+            <button type="button" onclick="submitDeleteForm()" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 flex-1">Ya, Hapus</button>
+        </div>
+    </div>
 </div>
 
 {{-- Product Modal --}}
@@ -182,6 +199,29 @@
 </div>
 
 <script>
+let deleteFormId = null;
+
+function openDeleteModal(formId, message) {
+    deleteFormId = formId;
+    document.getElementById('delete-modal-message').textContent = message;
+    const modal = document.getElementById('delete-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeDeleteModal() {
+    deleteFormId = null;
+    const modal = document.getElementById('delete-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function submitDeleteForm() {
+    if (deleteFormId) {
+        document.getElementById(deleteFormId)?.submit();
+    }
+}
+
 function openProductModal(product = null) {
     const modal = document.getElementById('product-modal');
     const form = document.getElementById('product-form');
@@ -230,6 +270,10 @@ function openProductModal(product = null) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 }
+
+document.getElementById('delete-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
 
 function closeProductModal() {
     const modal = document.getElementById('product-modal');

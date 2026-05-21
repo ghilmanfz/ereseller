@@ -140,37 +140,32 @@
                                     </form>
                                 @endif
 
-                                {{-- Status Change Dropdown --}}
-                                <div class="relative group">
-                                    <button type="button" class="px-3 py-1.5 text-xs font-semibold border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 w-full text-left flex items-center justify-between">
-                                        <span>Ubah Status</span>
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-                                    </button>
-                                    <div class="hidden group-hover:block absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg z-10 min-w-max">
-                                        @php
-                                            $transitions = [
-                                                'pending_payment' => ['payment_submitted', 'cancelled'],
-                                                'payment_submitted' => ['processing', 'ready_for_pickup', 'cancelled'],
-                                                'awaiting_shipment_cod' => ['shipped', 'cancelled'],
-                                                'processing' => ['shipped', 'cancelled'],
-                                                'shipped' => ['completed', 'cancelled'],
-                                                'ready_for_pickup' => ['completed', 'cancelled'],
-                                            ];
-                                            $validNextStatus = $transitions[$order->status] ?? [];
-                                        @endphp
-                                        @forelse($validNextStatus as $nextStatus)
-                                            <form method="POST" action="{{ route('admin.change-order-status', $order->id) }}" class="block">
-                                                @csrf
-                                                <input type="hidden" name="new_status" value="{{ $nextStatus }}">
-                                                <button type="submit" class="w-full text-left px-4 py-2 text-xs text-neutral-700 hover:bg-primary-50 hover:text-primary-700 border-b border-neutral-100 last:border-b-0 transition-colors">
-                                                    {{ $statusLabels[$nextStatus] ?? $nextStatus }}
-                                                </button>
-                                            </form>
-                                        @empty
-                                            <div class="px-4 py-2 text-xs text-neutral-500">Tidak ada pilihan status</div>
-                                        @endforelse
-                                    </div>
-                                </div>
+                                {{-- Status Change Form --}}
+                                @php
+                                    $transitions = [
+                                        'pending_payment' => ['payment_submitted', 'cancelled'],
+                                        'payment_submitted' => ['processing', 'ready_for_pickup', 'cancelled'],
+                                        'awaiting_shipment_cod' => ['shipped', 'cancelled'],
+                                        'processing' => ['shipped', 'cancelled'],
+                                        'shipped' => ['completed', 'cancelled'],
+                                        'ready_for_pickup' => ['completed', 'cancelled'],
+                                    ];
+                                    $validNextStatus = $transitions[$order->status] ?? [];
+                                @endphp
+                                @if(! empty($validNextStatus))
+                                    <form method="POST" action="{{ route('admin.change-order-status', $order->id) }}" class="flex items-center gap-1">
+                                        @csrf
+                                        <select name="new_status" class="px-2 py-1.5 text-xs border border-primary-300 text-primary-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200 w-full">
+                                            <option value="">Pilih Status</option>
+                                            @foreach($validNextStatus as $nextStatus)
+                                                <option value="{{ $nextStatus }}">{{ $statusLabels[$nextStatus] ?? $nextStatus }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="px-3 py-1.5 text-xs font-semibold border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 whitespace-nowrap">Ubah</button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-neutral-400">Status final</span>
+                                @endif
 
                                 @if($order->shipping_method === 'pickup' && $order->status === 'ready_for_pickup')
                                     <form method="POST" action="/admin/pesanan/{{ $order->id }}/reminder-pickup">

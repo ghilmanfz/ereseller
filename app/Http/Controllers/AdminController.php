@@ -9,8 +9,10 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -191,6 +193,36 @@ class AdminController extends Controller
         ]);
     }
 
+    public function search(Request $request): RedirectResponse
+    {
+        $keyword = trim($request->string('q')->toString());
+
+        if ($keyword === '') {
+            return redirect('/admin/pesanan');
+        }
+
+        $normalized = Str::lower($keyword);
+        $stockIntent = str_contains($normalized, 'stok') || str_contains($normalized, 'stock');
+
+        $matchingOrders = Order::query()
+            ->where('order_code', 'like', '%'.$keyword.'%')
+            ->orWhere('recipient_name', 'like', '%'.$keyword.'%')
+            ->orWhere('recipient_whatsapp', 'like', '%'.$keyword.'%')
+            ->exists();
+
+        $matchingProducts = Product::query()
+            ->where('name', 'like', '%'.$keyword.'%')
+            ->orWhere('slug', 'like', '%'.$keyword.'%')
+            ->orWhere('stock', 'like', '%'.$keyword.'%')
+            ->exists();
+
+        if (($stockIntent && $matchingProducts) || ($matchingProducts && ! $matchingOrders)) {
+            return redirect('/admin/produk?q='.urlencode($keyword));
+        }
+
+        return redirect('/admin/pesanan?q='.urlencode($keyword));
+    }
+
     public function bulkVerifyPayment(Request $request): RedirectResponse
     {
         $orderIds = $request->input('order_ids', []);
@@ -241,21 +273,17 @@ class AdminController extends Controller
     public function changeOrderStatus(Order $order, Request $request): RedirectResponse
     {
         $newStatus = $request->string('new_status')->toString();
-
-        // Valid status transitions
-        $allowedTransitions = [
-            'pending_payment' => ['payment_submitted', 'cancelled'],
-            'payment_submitted' => ['processing', 'ready_for_pickup', 'cancelled'],
-            'awaiting_shipment_cod' => ['shipped', 'cancelled'],
-            'processing' => ['shipped', 'cancelled'],
-            'shipped' => ['completed', 'cancelled'],
-            'ready_for_pickup' => ['completed', 'cancelled'],
-        ];
+        $allowedTransitions = $this->allowedOrderTransitions();
 
         $currentStatus = $order->status;
+        $allowedNextStatus = $allowedTransitions[$currentStatus] ?? [];
+
+        if ($newStatus === '') {
+            return back()->with('error', 'Pilih status tujuan terlebih dahulu.');
+        }
 
         // Validate transition
-        if (!isset($allowedTransitions[$currentStatus]) || !in_array($newStatus, $allowedTransitions[$currentStatus], true)) {
+        if (! in_array($newStatus, $allowedNextStatus, true)) {
             return back()->with('error', "Transisi status dari {$currentStatus} ke {$newStatus} tidak diizinkan");
         }
 
@@ -274,9 +302,32 @@ class AdminController extends Controller
             $updates['cancelled_at'] = now();
         }
 
+        if (in_array($newStatus, ['processing', 'ready_for_pickup', 'shipped', 'completed'], true)
+            && in_array($order->payment_method, ['transfer', 'ewallet'], true)
+            && ! $order->paid_at) {
+            $updates['paid_at'] = now();
+        }
+
         $order->update($updates);
 
         return back()->with('success', "Status pesanan diubah menjadi " . $this->getStatusLabel($newStatus));
+    }
+
+    public function orderTransitions(string $status): array
+    {
+        return $this->allowedOrderTransitions()[$status] ?? [];
+    }
+
+    private function allowedOrderTransitions(): array
+    {
+        return [
+            'pending_payment' => ['payment_submitted', 'cancelled'],
+            'payment_submitted' => ['processing', 'ready_for_pickup', 'cancelled'],
+            'awaiting_shipment_cod' => ['shipped', 'cancelled'],
+            'processing' => ['shipped', 'cancelled'],
+            'shipped' => ['completed', 'cancelled'],
+            'ready_for_pickup' => ['completed', 'cancelled'],
+        ];
     }
 
     private function getStatusLabel(string $status): string
@@ -479,6 +530,60 @@ class AdminController extends Controller
             ->orderByDesc('sold')
             ->limit(8)
             ->get();
+
+        $hasFilters = $request->filled('q') || $request->filled('payment') || $request->filled('status');
+        if (! $hasFilters && $transactions->total() === 0 && $topProducts->isEmpty()) {
+            $trendLabels = ['15 Mei', '16 Mei', '17 Mei', '18 Mei', '19 Mei', '20 Mei', '21 Mei'];
+            $trendValues = [1850000, 2100000, 2450000, 2280000, 2790000, 3180000, 3420000];
+
+            $dummyTopProducts = [
+                ['id' => 1, 'name' => 'Facial Wash Aloe Vera', 'sold' => 37, 'revenue' => 1849000],
+                ['id' => 2, 'name' => 'Day Cream Brightening', 'sold' => 29, 'revenue' => 2175000],
+                ['id' => 3, 'name' => 'Body Serum Gold', 'sold' => 23, 'revenue' => 2070000],
+                ['id' => 4, 'name' => 'Sunscreen SPF 50', 'sold' => 19, 'revenue' => 1330000],
+            ];
+
+            $topProducts = collect($dummyTopProducts)->map(function (array $item): object {
+                return (object) [
+                    'product_id' => $item['id'],
+                    'product_name' => $item['name'],
+                    'sold' => $item['sold'],
+                    'revenue' => $item['revenue'],
+                ];
+            });
+
+            $dummyTransactions = collect([
+                ['code' => 'ORD-DM-001', 'name' => 'Nabila Putri', 'date' => now()->subDays(1), 'payment' => 'transfer', 'total' => 275000, 'status' => 'completed'],
+                ['code' => 'ORD-DM-002', 'name' => 'Dewi Anggraini', 'date' => now()->subDays(1)->addHours(2), 'payment' => 'ewallet', 'total' => 189000, 'status' => 'processing'],
+                ['code' => 'ORD-DM-003', 'name' => 'Rina Maharani', 'date' => now()->subDays(2), 'payment' => 'cod', 'total' => 320000, 'status' => 'shipped'],
+                ['code' => 'ORD-DM-004', 'name' => 'Siti Rahma', 'date' => now()->subDays(2)->addHours(5), 'payment' => 'transfer', 'total' => 154000, 'status' => 'ready_for_pickup'],
+                ['code' => 'ORD-DM-005', 'name' => 'Aulia Safitri', 'date' => now()->subDays(3), 'payment' => 'pay_at_store', 'total' => 98000, 'status' => 'completed'],
+            ])->map(function (array $item): object {
+                return (object) [
+                    'order_code' => $item['code'],
+                    'recipient_name' => $item['name'],
+                    'created_at' => $item['date'],
+                    'payment_method' => $item['payment'],
+                    'total' => $item['total'],
+                    'status' => $item['status'],
+                ];
+            });
+
+            $transactions = new LengthAwarePaginator(
+                $dummyTransactions,
+                $dummyTransactions->count(),
+                20,
+                1,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            $revenue = array_sum($trendValues);
+            $orderCount = 24;
+            $aov = (int) round($revenue / $orderCount);
+        }
 
         return view('pages.admin.analytics', [
             'revenue' => $revenue,
@@ -829,6 +934,21 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Produk berhasil diperbarui.');
+    }
+
+    public function deleteProduct(Product $product): RedirectResponse
+    {
+        try {
+            if ($product->image_url && str_starts_with($product->image_url, '/storage/')) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $product->image_url));
+            }
+
+            $product->delete();
+
+            return back()->with('success', 'Produk berhasil dihapus.');
+        } catch (QueryException $e) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih terhubung dengan data transaksi.');
+        }
     }
 
     public function toggleProductStatus(Product $product): RedirectResponse

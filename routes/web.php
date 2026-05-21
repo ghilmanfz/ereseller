@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function (): void {
 // Admin + Owner: read-only routes
 Route::middleware(['auth', \App\Http\Middleware\IsOwner::class])->prefix('admin')->group(function (): void {
     Route::get('/', [AdminController::class, 'dashboard']);
+    Route::get('/cari', [AdminController::class, 'search']);
     Route::get('/notifications', [AdminController::class, 'getNotifications']);
     Route::get('/pesanan', [AdminController::class, 'orders']);
     Route::get('/produk-pesanan', [AdminController::class, 'orders']); // Backward compatibility
@@ -81,6 +82,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
 
     Route::post('/produk', [AdminController::class, 'storeProduct']);
     Route::patch('/produk/{product}', [AdminController::class, 'updateProduct']);
+    Route::delete('/produk/{product}', [AdminController::class, 'deleteProduct']);
     Route::post('/produk/{product}/toggle-status', [AdminController::class, 'toggleProductStatus']);
 
     Route::post('/pengaturan', [AdminController::class, 'saveSettings']);

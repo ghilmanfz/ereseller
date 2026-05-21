@@ -115,6 +115,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'customer',
             ]
         );
+
+        $this->call(OrderDummySeeder::class);
     }
 
     private function fetchSr12Products(): array

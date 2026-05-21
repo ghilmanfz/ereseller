@@ -56,10 +56,10 @@
                                     Edit
                                 </button>
                                 @if($category->products_count === 0)
-                                <form method="POST" action="/admin/kategori/{{ $category->id }}" onsubmit="return confirm('Hapus kategori ini?')">
+                                <form id="delete-category-{{ $category->id }}" method="POST" action="/admin/kategori/{{ $category->id }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="px-2 py-1 text-xs border border-red-300 text-red-700 rounded-lg hover:bg-red-50">Hapus</button>
+                                    <button type="button" onclick="openDeleteModal('delete-category-{{ $category->id }}', 'Hapus kategori ini?')" class="px-2 py-1 text-xs border border-red-300 text-red-700 rounded-lg hover:bg-red-50">Hapus</button>
                                 </form>
                                 @else
                                 <span class="text-xs text-neutral-400">Ada produk</span>
@@ -111,6 +111,18 @@
     @endif
 </div>
 
+{{-- Delete Confirmation Modal --}}
+<div id="delete-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg max-w-sm w-full p-6">
+        <h3 class="text-base font-bold text-neutral-800">Konfirmasi Hapus</h3>
+        <p id="delete-modal-message" class="text-sm text-neutral-600 mt-2">Data akan dihapus permanen.</p>
+        <div class="flex gap-2 pt-5">
+            <button type="button" onclick="closeDeleteModal()" class="btn-outline flex-1 text-sm !py-2.5">Batal</button>
+            <button type="button" onclick="submitDeleteForm()" class="px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 flex-1">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
+
 {{-- Edit Category Modal --}}
 <div id="edit-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-lg max-w-sm w-full p-6">
@@ -136,6 +148,25 @@
 </div>
 
 <script>
+let deleteFormId = null;
+
+function openDeleteModal(formId, message) {
+    deleteFormId = formId;
+    document.getElementById('delete-modal-message').textContent = message;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    deleteFormId = null;
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+
+function submitDeleteForm() {
+    if (deleteFormId) {
+        document.getElementById(deleteFormId)?.submit();
+    }
+}
+
 function openEditModal(id, name) {
     document.getElementById('edit-name').value = name;
     document.getElementById('edit-form').action = `/admin/kategori/${id}`;
@@ -146,6 +177,9 @@ function closeEditModal() {
 }
 document.getElementById('edit-modal')?.addEventListener('click', function(e) {
     if (e.target === this) closeEditModal();
+});
+document.getElementById('delete-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
 });
 </script>
 @endsection
