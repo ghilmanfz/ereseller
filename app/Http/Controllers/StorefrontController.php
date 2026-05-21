@@ -76,7 +76,6 @@ class StorefrontController extends Controller
         ]);
     }
 
-<<<<<<< HEAD
     private function resolveProductGallery(Product $product): array
     {
         $cacheKey = 'sr12_gallery_'.$product->slug;
@@ -126,7 +125,8 @@ class StorefrontController extends Controller
 
             return array_slice($gallery, 0, 3);
         });
-=======
+    }
+
     private function featuredProducts(): Collection
     {
         $mode = AppSetting::getValue('featured_products_mode', 'default');
@@ -172,7 +172,6 @@ class StorefrontController extends Controller
             'cta_primary_button_text' => AppSetting::getValue('landing_cta_primary_button_text', 'Daftar Sekarang'),
             'cta_secondary_button_text' => AppSetting::getValue('landing_cta_secondary_button_text', 'Pelajari Produk'),
         ];
->>>>>>> 4b832faa2a6d3640b15799e16f0352fbb3aba2dd
     }
 
     private function mapProductCard(Product $product): array

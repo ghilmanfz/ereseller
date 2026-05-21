@@ -372,9 +372,6 @@ class AdminController extends Controller
         ]);
     }
 
-<<<<<<< HEAD
-    public function analytics(Request $request): View
-=======
     private function settingsPayload(): array
     {
         return [
@@ -401,8 +398,7 @@ class AdminController extends Controller
         ];
     }
 
-    public function analytics(): View
->>>>>>> 4b832faa2a6d3640b15799e16f0352fbb3aba2dd
+    public function analytics(Request $request): View
     {
         $from = $request->string('from')->toString() !== ''
             ? Carbon::parse($request->string('from')->toString())->startOfDay()
@@ -913,9 +909,6 @@ class AdminController extends Controller
         return back()->with('success', 'Pengaturan berhasil disimpan.');
     }
 
-<<<<<<< HEAD
-    public function categories(Request $request): View
-=======
     private function validatedFeaturedProductIds(Request $request): string
     {
         $selectedIds = collect($request->input('featured_product_ids', []))
@@ -972,8 +965,7 @@ class AdminController extends Controller
         return Storage::url($path);
     }
 
-    public function categories(): View
->>>>>>> 4b832faa2a6d3640b15799e16f0352fbb3aba2dd
+    public function categories(Request $request): View
     {
         $categories = Category::query()
             ->withCount('products')
