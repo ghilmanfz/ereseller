@@ -4,43 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="@yield('meta_description', 'SINTIA SR12 Distributor - Distributor Resmi SR12 Skincare Herbal Terpercaya di Parungpanjang. Belanja mudah, aman, dan terpercaya.')">
-    <title>@yield('title', 'SINTIA SR12 Distributor') - Distributor Resmi SR12 Parungpanjang</title>
+    <title>@yield('title', $storeName ?? 'SINTIA SR12 Distributor') - Distributor Resmi SR12 Parungpanjang</title>
 
     {{-- Favicon --}}
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><text y='32' font-size='32'>🌸</text></svg>">
 
-    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
-    {{-- Fallback assets while local Vite build is unavailable --}}
-    <script>
-        tailwind = {
-            config: {
-                theme: {
-                    extend: {
-                        fontFamily: {
-                            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                            serif: ['Playfair Display', 'ui-serif', 'Georgia', 'serif'],
-                        },
-                        colors: {
-                            primary: {
-                                50: '#fdf2f8',
-                                100: '#fce7f3',
-                                200: '#fbcfe8',
-                                300: '#f9a8d4',
-                                400: '#f472b6',
-                                500: '#ec4899',
-                                600: '#db2777',
-                                700: '#be185d',
-                                800: '#9d174d',
-                                900: '#831843',
-                                950: '#500724',
-                            },
-                        },
-                    },
-                },
-            },
-        };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
 
@@ -113,7 +82,7 @@
         .animate-fade-in-up { animation: fade-in-up .6s ease-out forwards; }
         .animate-float { animation: float 3s ease-in-out infinite; }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 </head>
 <body class="min-h-screen bg-white flex flex-col">
 

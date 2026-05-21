@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin') - SR12 Sintia</title>
+    <title>@yield('title', 'Admin') - {{ $storeName ?? 'SR12 Sintia' }}</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><text y='32' font-size='32'>🌸</text></svg>">
     <script>
         tailwind = {
@@ -155,7 +155,7 @@
 
         {{-- Footer --}}
         <footer class="px-6 py-4 border-t border-neutral-100 text-center">
-            <p class="text-xs text-neutral-400">&copy; {{ date('Y') }} SR12 Sintia Distributor Parungpanjang. Powered by SR12 Eco-System.</p>
+            <p class="text-xs text-neutral-400">&copy; {{ date('Y') }} {{ $storeName ?? 'SR12 Sintia' }} Distributor Parungpanjang. Powered by SR12 Eco-System.</p>
         </footer>
     </div>
 

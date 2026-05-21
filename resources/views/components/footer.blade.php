@@ -5,12 +5,16 @@
             {{-- Brand --}}
             <div>
                 <a href="/" class="flex items-center gap-2 mb-4">
+                    @if(! empty($storeLogo))
+                    <img src="{{ $storeLogo }}" alt="{{ $storeName }} logo" class="w-9 h-9 rounded-xl object-cover shadow-lg shadow-primary-500/20">
+                    @else
                     <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
                         <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                         </svg>
                     </div>
-                    <span class="text-lg font-bold text-primary-700">SINTIA SR12</span>
+                    @endif
+                    <span class="text-lg font-bold text-primary-700">{{ $storeName }}</span>
                 </a>
                 <p class="text-sm text-neutral-500 leading-relaxed mb-5">
                     Distributor SR12 Skincare Terpercaya di Parungpanjang. Menghadirkan solusi kecantikan herbal berkualitas tinggi.
@@ -55,8 +59,7 @@
             <div>
                 <h4 class="text-sm font-bold text-neutral-900 uppercase tracking-wider mb-4 font-sans">Alamat</h4>
                 <div class="space-y-2 text-sm text-neutral-500">
-                    <p>Jl. Raya Parungpanjang No. 12</p>
-                    <p>Bogor, Jawa Barat</p>
+                    <p>{!! nl2br(e($pickupAddress)) !!}</p>
                     <p>WhatsApp: {{ $storeWhatsappDisplay }}</p>
                 </div>
             </div>
@@ -64,7 +67,7 @@
 
         {{-- Copyright --}}
         <div class="mt-12 pt-8 border-t border-neutral-200 text-center">
-            <p class="text-xs text-neutral-400">&copy; {{ date('Y') }} SINTIA SR12 Parungpanjang. All rights reserved.</p>
+            <p class="text-xs text-neutral-400">&copy; {{ date('Y') }} {{ $storeName }}. All rights reserved.</p>
         </div>
     </div>
 </footer>

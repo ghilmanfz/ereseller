@@ -24,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
         View::composer('*', function ($view): void {
             $rawWhatsapp = AppSetting::getValue('store_whatsapp', '081111111111');
             $digits = preg_replace('/\D+/', '', $rawWhatsapp) ?? '';
+            $storeName = AppSetting::getValue('store_name', 'SR12 Sintia');
+            $storeLogo = AppSetting::getValue('store_logo', '');
+            $pickupAddress = AppSetting::getValue('pickup_address', 'Parungpanjang, Bogor');
 
             if (str_starts_with($digits, '0')) {
                 $waInternational = '62'.substr($digits, 1);
@@ -31,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
                 $waInternational = $digits;
             }
 
+            $view->with('storeName', $storeName);
+            $view->with('storeLogo', $storeLogo);
+            $view->with('pickupAddress', $pickupAddress);
             $view->with('storeWhatsappDisplay', $rawWhatsapp);
             $view->with('storeWhatsappLink', 'https://wa.me/'.$waInternational);
         });
