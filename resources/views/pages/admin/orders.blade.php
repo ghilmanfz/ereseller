@@ -38,28 +38,40 @@
                 <option value="cod" {{ ($currentPayment ?? '') === 'cod' ? 'selected' : '' }}>COD</option>
                 <option value="pay_at_store" {{ ($currentPayment ?? '') === 'pay_at_store' ? 'selected' : '' }}>Bayar di Toko</option>
             </select>
+            <select name="status" class="input-field !py-2 !w-44">
+                <option value="">Semua Status</option>
+                <option value="pending_payment" {{ ($currentStatus ?? '') === 'pending_payment' ? 'selected' : '' }}>Menunggu Pembayaran</option>
+                <option value="payment_submitted" {{ ($currentStatus ?? '') === 'payment_submitted' ? 'selected' : '' }}>Menunggu Verifikasi</option>
+                <option value="awaiting_shipment_cod" {{ ($currentStatus ?? '') === 'awaiting_shipment_cod' ? 'selected' : '' }}>Menunggu COD</option>
+                <option value="processing" {{ ($currentStatus ?? '') === 'processing' ? 'selected' : '' }}>Diproses</option>
+                <option value="shipped" {{ ($currentStatus ?? '') === 'shipped' ? 'selected' : '' }}>Dikirim</option>
+                <option value="ready_for_pickup" {{ ($currentStatus ?? '') === 'ready_for_pickup' ? 'selected' : '' }}>Siap Diambil</option>
+                <option value="completed" {{ ($currentStatus ?? '') === 'completed' ? 'selected' : '' }}>Selesai</option>
+                <option value="cancelled" {{ ($currentStatus ?? '') === 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+            </select>
             <button type="submit" class="btn-outline text-sm !py-2 !px-4">Filter</button>
         </form>
     </div>
 
     {{-- Bulk Actions --}}
     @if($orders->count() > 0 && auth()->user()->role === 'admin')
-        <div class="mb-4 p-4 bg-neutral-50 rounded-lg hidden" id="bulk-actions" x-data="{ selectedCount: 0 }">
+        <div class="mb-4 p-4 bg-neutral-50 rounded-lg hidden" id="bulk-actions">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="select-all" x-on:change="document.querySelectorAll('input[name=order_ids]').forEach(cb => cb.checked = $el.checked); selectedCount = document.querySelectorAll('input[name=order_ids]:checked').length" class="rounded border-neutral-300">
+                    <input type="checkbox" id="select-all" class="rounded border-neutral-300">
                     <span class="text-sm font-semibold text-neutral-700">
-                        <span x-text="selectedCount"></span> dipilih
+                        <span id="selected-count">0</span> dipilih
                     </span>
                 </div>
                 <div class="flex items-center gap-2">
                     <form method="POST" action="{{ route('admin.bulk-verify-payment') }}" class="inline" id="bulk-verify-form">
                         @csrf
-                        <div id="hidden-order-ids"></div>
+                        <div class="hidden-order-ids"></div>
                         <button type="button" class="px-3 py-1.5 text-xs font-semibold bg-primary-600 text-white rounded-lg hover:bg-primary-700" onclick="submitBulkAction('bulk-verify-form')">Verifikasi Pembayaran</button>
                     </form>
                     <form method="POST" action="{{ route('admin.bulk-advance-status') }}" class="inline" id="bulk-status-form">
                         @csrf
+                        <div class="hidden-order-ids"></div>
                         <button type="button" class="px-3 py-1.5 text-xs font-semibold border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50" onclick="submitBulkAction('bulk-status-form')">Lanjutkan Status</button>
                     </form>
                 </div>
@@ -195,6 +207,8 @@ function updateBulkActionsUI() {
     const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
     const bulkActionsDiv = document.getElementById('bulk-actions');
     const selectAllHeader = document.getElementById('select-all-header');
+    const selectAll = document.getElementById('select-all');
+    const selectedCountLabel = document.getElementById('selected-count');
 
     if (selectedCount > 0) {
         bulkActionsDiv.classList.remove('hidden');
@@ -202,13 +216,24 @@ function updateBulkActionsUI() {
         bulkActionsDiv.classList.add('hidden');
     }
 
+    if (selectedCountLabel) {
+        selectedCountLabel.textContent = String(selectedCount);
+    }
+
     selectAllHeader.checked = selectedCount === checkboxes.length && checkboxes.length > 0;
+    if (selectAll) {
+        selectAll.checked = selectAllHeader.checked;
+    }
 }
 
 function submitBulkAction(formId) {
     const checkboxes = document.querySelectorAll('input[name=order_ids]:checked');
     const form = document.getElementById(formId);
-    const hiddenDiv = form.querySelector('div');
+    const hiddenDiv = form.querySelector('.hidden-order-ids');
+
+    if (!hiddenDiv) {
+        return;
+    }
     
     hiddenDiv.innerHTML = '';
     checkboxes.forEach(cb => {
@@ -223,6 +248,12 @@ function submitBulkAction(formId) {
 }
 
 document.getElementById('select-all-header')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('input[name=order_ids]');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateBulkActionsUI();
+});
+
+document.getElementById('select-all')?.addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('input[name=order_ids]');
     checkboxes.forEach(cb => cb.checked = this.checked);
     updateBulkActionsUI();

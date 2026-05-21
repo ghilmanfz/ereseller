@@ -13,18 +13,16 @@
 
     <div class="grid lg:grid-cols-2 gap-10 mb-16">
         {{-- Image Gallery --}}
-        <div x-data="{ activeImg: 0 }">
+        <div x-data="{ activeImg: 0, images: @js($productGallery) }">
             <div class="aspect-square bg-neutral-100 rounded-2xl overflow-hidden mb-4">
-                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                <img :src="images[activeImg]" alt="{{ $product->name }}" class="w-full h-full object-cover">
             </div>
             <div class="flex gap-3">
-                @for($i = 0; $i < 3; $i++)
-                <button @click="activeImg = {{ $i }}" :class="activeImg === {{ $i }} ? 'ring-2 ring-primary-500' : 'ring-1 ring-neutral-200'" class="w-20 h-20 rounded-xl overflow-hidden transition-all">
-                    <div class="w-full h-full bg-neutral-100 flex items-center justify-center">
-                        <svg class="w-8 h-8 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
-                    </div>
-                </button>
-                @endfor
+                <template x-for="(img, index) in images" :key="index">
+                    <button @click="activeImg = index" :class="activeImg === index ? 'ring-2 ring-primary-500' : 'ring-1 ring-neutral-200'" class="w-20 h-20 rounded-xl overflow-hidden transition-all bg-neutral-100">
+                        <img :src="img" :alt="`{{ $product->name }} thumbnail ${index + 1}`" class="w-full h-full object-cover">
+                    </button>
+                </template>
             </div>
             {{-- Trust Badges --}}
             <div class="mt-6 grid grid-cols-3 gap-3">
@@ -108,7 +106,7 @@
                         <p class="text-xl font-bold text-neutral-800">Rp <span x-text="(qty * price).toLocaleString('id-ID')">85.000</span></p>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary w-full !py-3.5">
+                <button type="submit" class="btn-primary w-full py-3.5!">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
                     Tambah ke Keranjang
                 </button>

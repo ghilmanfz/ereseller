@@ -13,9 +13,15 @@
 <div class="grid lg:grid-cols-3 gap-6">
     {{-- Daftar Kategori --}}
     <div class="lg:col-span-2 card p-6">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
             <h2 class="text-base font-bold text-neutral-800 font-sans">Daftar Kategori</h2>
-            <span class="text-xs text-neutral-500">{{ $categories->count() }} kategori</span>
+            <div class="flex items-center gap-2">
+                <form method="GET" action="/admin/kategori" class="flex items-center gap-2">
+                    <input type="text" name="q" value="{{ $currentQuery ?? '' }}" placeholder="Cari kategori..." class="input-field !py-2 !w-56">
+                    <button type="submit" class="btn-outline text-sm !py-2 !px-4">Cari</button>
+                </form>
+                <span class="text-xs text-neutral-500">{{ $categories->count() }} kategori</span>
+            </div>
         </div>
 
         @if($categories->isEmpty())

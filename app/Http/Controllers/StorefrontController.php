@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -59,6 +61,7 @@ class StorefrontController extends Controller
     public function productDetail(string $slug): View
     {
         $product = Product::query()->with('category')->where('slug', $slug)->where('is_active', true)->firstOrFail();
+        $productGallery = $this->resolveProductGallery($product);
 
         $recommendations = Product::query()
             ->where('is_active', true)
@@ -69,8 +72,60 @@ class StorefrontController extends Controller
 
         return view('pages.product-detail', [
             'product' => $product,
+            'productGallery' => $productGallery,
             'recommendations' => $recommendations->map(fn (Product $item) => $this->mapProductCard($item))->all(),
         ]);
+    }
+
+    private function resolveProductGallery(Product $product): array
+    {
+        $cacheKey = 'sr12_gallery_'.$product->slug;
+
+        return Cache::remember($cacheKey, now()->addHours(12), function () use ($product): array {
+            $base = 'https://sr12herbalskincare.co.id/minio/websr12/';
+            $urls = [];
+
+            try {
+                $response = Http::timeout(15)
+                    ->acceptJson()
+                    ->get('https://sr12herbalskincare.co.id/api/product/detail/'.$product->slug);
+
+                if ($response->ok()) {
+                    $data = $response->json('data');
+                    if (is_array($data)) {
+                        $mainThumbnail = trim((string) ($data['thumbnail'] ?? ''));
+                        if ($mainThumbnail !== '') {
+                            $urls[] = $base.$mainThumbnail;
+                        }
+
+                        foreach (($data['productAssets'] ?? []) as $asset) {
+                            $assetThumb = trim((string) ($asset['thumbnail'] ?? ''));
+                            if ($assetThumb !== '') {
+                                $urls[] = $base.$assetThumb;
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fallback to local image if remote API is not reachable.
+            }
+
+            if (! empty($product->image_url)) {
+                $urls[] = $product->image_url;
+            }
+
+            $gallery = array_values(array_unique(array_filter($urls, fn ($url) => is_string($url) && $url !== '')));
+
+            if (empty($gallery)) {
+                return [];
+            }
+
+            while (count($gallery) < 3) {
+                $gallery[] = $gallery[0];
+            }
+
+            return array_slice($gallery, 0, 3);
+        });
     }
 
     private function mapProductCard(Product $product): array

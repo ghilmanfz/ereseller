@@ -16,6 +16,12 @@
             <div class="flex items-center gap-2">
                 <form method="GET" action="/admin/users" class="flex items-center gap-2">
                     <input type="text" name="q" value="{{ $currentQuery ?? '' }}" placeholder="Cari user..." class="input-field !py-2 !w-44">
+                    <select name="role" class="input-field !py-2 !w-36">
+                        <option value="">Semua Role</option>
+                        <option value="admin" {{ ($currentRole ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="owner" {{ ($currentRole ?? '') === 'owner' ? 'selected' : '' }}>Owner</option>
+                        <option value="customer" {{ ($currentRole ?? '') === 'customer' ? 'selected' : '' }}>Customer</option>
+                    </select>
                     <button type="submit" class="btn-outline text-sm !py-2 !px-4">Cari</button>
                 </form>
                 @if(auth()->user()->role === 'admin')

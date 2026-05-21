@@ -58,6 +58,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsOwner::class])->prefix('admin'
     Route::get('/users', [AdminController::class, 'users']);
     Route::get('/pengaturan', [AdminController::class, 'settings']);
     Route::get('/laporan', [AdminController::class, 'analytics']);
+    Route::get('/laporan/export', [AdminController::class, 'exportAnalytics'])->name('admin.analytics.export');
     Route::get('/kategori', [AdminController::class, 'categories']);
 });
 

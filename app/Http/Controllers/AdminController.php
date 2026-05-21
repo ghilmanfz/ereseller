@@ -5,24 +5,94 @@ namespace App\Http\Controllers;
 use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminController extends Controller
 {
-    public function dashboard(): View
+    public function dashboard(Request $request): View
     {
+        $from = $request->string('from')->toString() !== ''
+            ? Carbon::parse($request->string('from')->toString())->startOfDay()
+            : now()->startOfMonth();
+
+        $to = $request->string('to')->toString() !== ''
+            ? Carbon::parse($request->string('to')->toString())->endOfDay()
+            : now()->endOfDay();
+
+        $baseOrders = Order::query()
+            ->whereBetween('created_at', [$from, $to])
+            ->when($request->filled('payment'), function ($query) use ($request): void {
+                $query->where('payment_method', $request->string('payment')->toString());
+            })
+            ->when($request->filled('status'), function ($query) use ($request): void {
+                $query->where('status', $request->string('status')->toString());
+            });
+
+        $orderCount = (clone $baseOrders)->count();
+        $revenue = (int) (clone $baseOrders)
+            ->whereIn('status', ['processing', 'shipped', 'ready_for_pickup', 'completed'])
+            ->sum('total');
+        $aov = (int) ((clone $baseOrders)->avg('total') ?? 0);
+
+        $trendBase = (clone $baseOrders);
+        if (! $request->filled('status')) {
+            $trendBase->whereIn('status', ['processing', 'shipped', 'ready_for_pickup', 'completed']);
+        }
+
+        $trendRows = $trendBase
+            ->selectRaw('DATE(created_at) as day, SUM(total) as total')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $trendMap = $trendRows->pluck('total', 'day');
+        $trendLabels = [];
+        $trendValues = [];
+        $cursor = $from->copy()->startOfDay();
+        $end = $to->copy()->startOfDay();
+        while ($cursor->lte($end)) {
+            $date = $cursor->toDateString();
+            $trendLabels[] = $cursor->translatedFormat('d M');
+            $trendValues[] = (int) ($trendMap[$date] ?? 0);
+            $cursor->addDay();
+        }
+
+        $roleCounts = User::query()
+            ->select('role', DB::raw('COUNT(*) as total'))
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
         return view('pages.admin.dashboard', [
-            'activeUsers' => User::query()->count(),
-            'orderCount' => Order::query()->count(),
-            'revenue' => (int) Order::query()->whereIn('status', ['processing', 'shipped', 'ready_for_pickup', 'completed'])->sum('total'),
+            'activeUsers' => User::query()->where('status', 'active')->count(),
+            'orderCount' => $orderCount,
+            'revenue' => $revenue,
+            'aov' => $aov,
             'lowStockProducts' => Product::query()->where('stock', '<=', 10)->orderBy('stock')->limit(5)->get(),
+            'recentOrders' => (clone $baseOrders)->latest()->limit(6)->get(),
+            'roleCounts' => [
+                'admin' => (int) ($roleCounts['admin'] ?? 0),
+                'owner' => (int) ($roleCounts['owner'] ?? 0),
+                'customer' => (int) ($roleCounts['customer'] ?? 0),
+            ],
+            'filters' => [
+                'from' => $from->toDateString(),
+                'to' => $to->toDateString(),
+                'payment' => $request->string('payment')->toString(),
+                'status' => $request->string('status')->toString(),
+            ],
+            'trendLabels' => $trendLabels,
+            'trendValues' => $trendValues,
         ]);
     }
 
@@ -106,6 +176,9 @@ class AdminController extends Controller
             ->when($request->filled('payment'), function ($query) use ($request): void {
                 $query->where('payment_method', $request->string('payment')->toString());
             })
+            ->when($request->filled('status'), function ($query) use ($request): void {
+                $query->where('status', $request->string('status')->toString());
+            })
             ->latest()
             ->paginate(25)
             ->withQueryString();
@@ -114,6 +187,7 @@ class AdminController extends Controller
             'orders' => $orders,
             'currentQuery' => $request->string('q')->toString(),
             'currentPayment' => $request->string('payment')->toString(),
+            'currentStatus' => $request->string('status')->toString(),
         ]);
     }
 
@@ -221,11 +295,41 @@ class AdminController extends Controller
         return $labels[$status] ?? $status;
     }
 
-    public function products(): View
+    public function products(Request $request): View
     {
+        $products = Product::query()
+            ->with('category')
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $keyword = $request->string('q')->toString();
+                $query->where(function ($inner) use ($keyword): void {
+                    $inner->where('name', 'like', '%'.$keyword.'%')
+                        ->orWhere('slug', 'like', '%'.$keyword.'%');
+                });
+            })
+            ->when($request->filled('category'), function ($query) use ($request): void {
+                $query->where('category_id', (int) $request->input('category'));
+            })
+            ->when($request->filled('status'), function ($query) use ($request): void {
+                $status = $request->string('status')->toString();
+                if ($status === 'active') {
+                    $query->where('is_active', true);
+                }
+                if ($status === 'inactive') {
+                    $query->where('is_active', false);
+                }
+                if ($status === 'low_stock') {
+                    $query->where('stock', '<=', 10);
+                }
+            })
+            ->latest()
+            ->get();
+
         return view('pages.admin.products', [
-            'products' => Product::query()->with('category')->latest()->get(),
+            'products' => $products,
             'categories' => Category::query()->orderBy('name')->get(),
+            'currentQuery' => $request->string('q')->toString(),
+            'currentCategory' => $request->string('category')->toString(),
+            'currentStatus' => $request->string('status')->toString(),
         ]);
     }
 
@@ -240,12 +344,16 @@ class AdminController extends Controller
                         ->orWhere('email', 'like', '%'.$keyword.'%');
                 });
             })
+            ->when($request->filled('role'), function ($query) use ($request): void {
+                $query->where('role', $request->string('role')->toString());
+            })
             ->orderByDesc('id')
             ->get();
 
         return view('pages.admin.users', [
             'users' => $users,
             'currentQuery' => $request->string('q')->toString(),
+            'currentRole' => $request->string('role')->toString(),
             'adminCount' => User::query()->where('role', 'admin')->count(),
             'ownerCount' => User::query()->where('role', 'owner')->count(),
             'customerCount' => User::query()->where('role', 'customer')->count(),
@@ -266,12 +374,196 @@ class AdminController extends Controller
         ]);
     }
 
-    public function analytics(): View
+    public function analytics(Request $request): View
     {
+        $from = $request->string('from')->toString() !== ''
+            ? Carbon::parse($request->string('from')->toString())->startOfDay()
+            : now()->startOfMonth();
+
+        $to = $request->string('to')->toString() !== ''
+            ? Carbon::parse($request->string('to')->toString())->endOfDay()
+            : now()->endOfDay();
+
+        $orders = Order::query()
+            ->with('user')
+            ->whereBetween('created_at', [$from, $to])
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $keyword = $request->string('q')->toString();
+                $query->where(function ($inner) use ($keyword): void {
+                    $inner->where('order_code', 'like', '%'.$keyword.'%')
+                        ->orWhere('recipient_name', 'like', '%'.$keyword.'%')
+                        ->orWhere('recipient_whatsapp', 'like', '%'.$keyword.'%');
+                });
+            })
+            ->when($request->filled('payment'), function ($query) use ($request): void {
+                $query->where('payment_method', $request->string('payment')->toString());
+            })
+            ->when($request->filled('status'), function ($query) use ($request): void {
+                $query->where('status', $request->string('status')->toString());
+            });
+
+        $transactions = (clone $orders)
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $revenueBase = (clone $orders);
+        if (! $request->filled('status')) {
+            $revenueBase->whereIn('status', ['processing', 'shipped', 'ready_for_pickup', 'completed']);
+        }
+
+        $revenue = (int) $revenueBase->sum('total');
+        $orderCount = (int) (clone $orders)->count();
+        $aov = (int) ((clone $orders)->avg('total') ?? 0);
+
+        $trendRows = (clone $orders)
+            ->selectRaw('DATE(created_at) as day, SUM(total) as total')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $trendMap = $trendRows->pluck('total', 'day');
+        $trendLabels = [];
+        $trendValues = [];
+        $cursor = $from->copy()->startOfDay();
+        $end = $to->copy()->startOfDay();
+        while ($cursor->lte($end)) {
+            $date = $cursor->toDateString();
+            $trendLabels[] = $cursor->translatedFormat('d M');
+            $trendValues[] = (int) ($trendMap[$date] ?? 0);
+            $cursor->addDay();
+        }
+
+        $topProducts = OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereBetween('orders.created_at', [$from, $to])
+            ->when($request->filled('payment'), function ($query) use ($request): void {
+                $query->where('orders.payment_method', $request->string('payment')->toString());
+            })
+            ->when($request->filled('status'), function ($query) use ($request): void {
+                $query->where('orders.status', $request->string('status')->toString());
+            })
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $keyword = $request->string('q')->toString();
+                $query->where(function ($inner) use ($keyword): void {
+                    $inner->where('order_items.product_name', 'like', '%'.$keyword.'%')
+                        ->orWhere('order_items.product_id', 'like', '%'.$keyword.'%');
+                });
+            })
+            ->selectRaw('order_items.product_id, order_items.product_name as product_name, SUM(order_items.quantity) as sold, SUM(order_items.line_total) as revenue')
+            ->groupBy('order_items.product_id', 'order_items.product_name')
+            ->orderByDesc('sold')
+            ->limit(8)
+            ->get();
+
         return view('pages.admin.analytics', [
-            'revenue' => (int) Order::query()->whereIn('status', ['processing', 'shipped', 'ready_for_pickup', 'completed'])->sum('total'),
-            'orders' => Order::query()->count(),
-            'aov' => (int) Order::query()->avg('total'),
+            'revenue' => $revenue,
+            'orders' => $orderCount,
+            'aov' => $aov,
+            'transactions' => $transactions,
+            'topProducts' => $topProducts,
+            'lowStockProducts' => Product::query()->where('stock', '<=', 10)->orderBy('stock')->limit(8)->get(),
+            'trendLabels' => $trendLabels,
+            'trendValues' => $trendValues,
+            'filters' => [
+                'from' => $from->toDateString(),
+                'to' => $to->toDateString(),
+                'q' => $request->string('q')->toString(),
+                'payment' => $request->string('payment')->toString(),
+                'status' => $request->string('status')->toString(),
+            ],
+        ]);
+    }
+
+    public function exportAnalytics(Request $request): StreamedResponse
+    {
+        $from = $request->string('from')->toString() !== ''
+            ? Carbon::parse($request->string('from')->toString())->startOfDay()
+            : now()->startOfMonth();
+
+        $to = $request->string('to')->toString() !== ''
+            ? Carbon::parse($request->string('to')->toString())->endOfDay()
+            : now()->endOfDay();
+
+        $format = $request->string('format', 'csv')->toString();
+
+        $rows = Order::query()
+            ->whereBetween('created_at', [$from, $to])
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $keyword = $request->string('q')->toString();
+                $query->where(function ($inner) use ($keyword): void {
+                    $inner->where('order_code', 'like', '%'.$keyword.'%')
+                        ->orWhere('recipient_name', 'like', '%'.$keyword.'%')
+                        ->orWhere('recipient_whatsapp', 'like', '%'.$keyword.'%');
+                });
+            })
+            ->when($request->filled('payment'), function ($query) use ($request): void {
+                $query->where('payment_method', $request->string('payment')->toString());
+            })
+            ->when($request->filled('status'), function ($query) use ($request): void {
+                $query->where('status', $request->string('status')->toString());
+            })
+            ->orderByDesc('created_at')
+            ->get([
+                'order_code',
+                'recipient_name',
+                'recipient_whatsapp',
+                'payment_method',
+                'shipping_method',
+                'status',
+                'subtotal',
+                'shipping_cost',
+                'total',
+                'created_at',
+            ]);
+
+        $fileDate = now()->format('Ymd_His');
+
+        if ($format === 'excel') {
+            return response()->streamDownload(function () use ($rows): void {
+                $out = fopen('php://output', 'w');
+                fwrite($out, "Kode Pesanan\tPelanggan\tWhatsApp\tPembayaran\tPengiriman\tStatus\tSubtotal\tOngkir\tTotal\tTanggal\n");
+                foreach ($rows as $row) {
+                    $line = [
+                        $row->order_code,
+                        $row->recipient_name,
+                        $row->recipient_whatsapp,
+                        $row->payment_method,
+                        $row->shipping_method,
+                        $row->status,
+                        (string) $row->subtotal,
+                        (string) $row->shipping_cost,
+                        (string) $row->total,
+                        $row->created_at?->format('Y-m-d H:i:s') ?? '',
+                    ];
+                    fwrite($out, implode("\t", $line)."\n");
+                }
+                fclose($out);
+            }, "laporan_analisis_{$fileDate}.xls", [
+                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            ]);
+        }
+
+        return response()->streamDownload(function () use ($rows): void {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Kode Pesanan', 'Pelanggan', 'WhatsApp', 'Pembayaran', 'Pengiriman', 'Status', 'Subtotal', 'Ongkir', 'Total', 'Tanggal']);
+            foreach ($rows as $row) {
+                fputcsv($out, [
+                    $row->order_code,
+                    $row->recipient_name,
+                    $row->recipient_whatsapp,
+                    $row->payment_method,
+                    $row->shipping_method,
+                    $row->status,
+                    (string) $row->subtotal,
+                    (string) $row->shipping_cost,
+                    (string) $row->total,
+                    $row->created_at?->format('Y-m-d H:i:s') ?? '',
+                ]);
+            }
+            fclose($out);
+        }, "laporan_analisis_{$fileDate}.csv", [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
@@ -353,7 +645,8 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'whatsapp' => ['required', 'string', 'max:20', 'unique:users,whatsapp'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'whatsapp' => ['required', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:1000'],
             'role' => ['required', 'in:admin,owner,customer'],
             'password' => ['required', 'string', 'min:8'],
@@ -364,11 +657,17 @@ class AdminController extends Controller
             $digits = '0'.substr($digits, 2);
         }
 
+        if ($digits === '' || User::query()->where('whatsapp', $digits)->exists()) {
+            return back()->withErrors([
+                'whatsapp' => 'Nomor WhatsApp tidak valid atau sudah terdaftar.',
+            ])->withInput();
+        }
+
         User::query()->create([
             'name' => $data['name'],
             'whatsapp' => $digits,
             'address' => $data['address'],
-            'email' => $digits.'@sr12.local',
+            'email' => $data['email'] ?? $digits.'@sr12.local',
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
             'status' => 'active',
@@ -381,11 +680,49 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'whatsapp' => ['nullable', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:1000'],
             'role' => ['required', 'in:admin,owner,customer'],
+            'password' => ['nullable', 'string', 'min:8'],
         ]);
 
-        $user->update($data);
+        $whatsappInput = $data['whatsapp'] ?? $user->whatsapp;
+        $digits = preg_replace('/\D+/', '', (string) $whatsappInput) ?? '';
+        if (str_starts_with($digits, '62')) {
+            $digits = '0'.substr($digits, 2);
+        }
+
+        if ($digits === '') {
+            return back()->withErrors([
+                'whatsapp' => 'Nomor WhatsApp tidak valid.',
+            ])->withInput();
+        }
+
+        $exists = User::query()
+            ->where('whatsapp', $digits)
+            ->where('id', '!=', $user->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'whatsapp' => 'Nomor WhatsApp sudah digunakan oleh user lain.',
+            ])->withInput();
+        }
+
+        $payload = [
+            'name' => $data['name'],
+            'email' => $data['email'] ?? $user->email,
+            'whatsapp' => $digits,
+            'address' => $data['address'],
+            'role' => $data['role'],
+        ];
+
+        if (! empty($data['password'])) {
+            $payload['password'] = Hash::make($data['password']);
+        }
+
+        $user->update($payload);
 
         return back()->with('success', 'Data user berhasil diperbarui.');
     }
@@ -497,10 +834,23 @@ class AdminController extends Controller
         return back()->with('success', 'Pengaturan berhasil disimpan.');
     }
 
-    public function categories(): View
+    public function categories(Request $request): View
     {
+        $categories = Category::query()
+            ->withCount('products')
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $keyword = $request->string('q')->toString();
+                $query->where(function ($inner) use ($keyword): void {
+                    $inner->where('name', 'like', '%'.$keyword.'%')
+                        ->orWhere('slug', 'like', '%'.$keyword.'%');
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
         return view('pages.admin.categories', [
-            'categories' => Category::query()->withCount('products')->orderBy('name')->get(),
+            'categories' => $categories,
+            'currentQuery' => $request->string('q')->toString(),
         ]);
     }
 

@@ -5,11 +5,33 @@
 @section('content')
 <div class="space-y-6">
     <div class="card p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-bold text-neutral-800 font-sans">Daftar Produk</h2>
-            @if(auth()->user()->role === 'admin')
-            <button type="button" onclick="openProductModal()" class="btn-primary text-sm">Tambah Produk</button>
-            @endif
+        <div class="flex flex-col gap-4 mb-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base font-bold text-neutral-800 font-sans">Daftar Produk</h2>
+                @if(auth()->user()->role === 'admin')
+                <button type="button" onclick="openProductModal()" class="btn-primary text-sm">Tambah Produk</button>
+                @endif
+            </div>
+
+            <form method="GET" action="/admin/produk" class="grid md:grid-cols-4 gap-2">
+                <input type="text" name="q" value="{{ $currentQuery ?? '' }}" placeholder="Cari nama atau slug..." class="input-field !py-2">
+                <select name="category" class="input-field !py-2">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ (string) ($currentCategory ?? '') === (string) $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                <select name="status" class="input-field !py-2">
+                    <option value="">Semua Status</option>
+                    <option value="active" {{ ($currentStatus ?? '') === 'active' ? 'selected' : '' }}>Aktif</option>
+                    <option value="inactive" {{ ($currentStatus ?? '') === 'inactive' ? 'selected' : '' }}>Nonaktif</option>
+                    <option value="low_stock" {{ ($currentStatus ?? '') === 'low_stock' ? 'selected' : '' }}>Stok Menipis</option>
+                </select>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-outline text-sm !py-2 w-full">Filter</button>
+                    <a href="/admin/produk" class="btn-outline text-sm !py-2 w-full">Reset</a>
+                </div>
+            </form>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
