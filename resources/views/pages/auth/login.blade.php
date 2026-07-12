@@ -79,57 +79,6 @@
                 <a href="/register" class="font-semibold text-primary-600 hover:text-primary-700">Daftar di Sini</a>
             </p>
         </div>
-
-        {{-- Quick Access Testing --}}
-        <div class="mt-6 border-2 border-dashed border-neutral-300 rounded-2xl p-5 bg-white/60 backdrop-blur-sm">
-            <div class="mb-4 rounded-xl border border-primary-100 bg-primary-50 p-3">
-                <p class="text-xs font-bold text-primary-700 uppercase tracking-wider">Akun Demo</p>
-                <div class="mt-2 text-xs text-neutral-600 space-y-1">
-                    <p><span class="font-semibold">Admin:</span> 081111111111 / password123</p>
-                    <p><span class="font-semibold">Owner:</span> 083333333333 / password123</p>
-                    <p><span class="font-semibold">Customer:</span> 082222222222 / password123</p>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-center gap-2 mb-3">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.384-3.19A1.75 1.75 0 015 10.396V4.604a1.75 1.75 0 011.036-1.584l5.384-3.19a1.75 1.75 0 011.743.039l4.87 3.122A1.75 1.75 0 0119 4.636v5.728a1.75 1.75 0 01-.967 1.565l-4.87 3.122a1.75 1.75 0 01-1.743.039z"/></svg>
-                    Dev Mode
-                </span>
-                <p class="text-xs font-semibold text-neutral-500">Quick Access Testing</p>
-            </div>
-            <p class="text-[11px] text-neutral-400 text-center mb-4">Pilih role untuk langsung masuk tanpa login (khusus testing frontend).</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <a href="/dev/login/admin" class="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-neutral-200 hover:border-primary-400 hover:bg-primary-50/50 transition-all duration-200">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 transition-shadow">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm font-bold text-neutral-800">Admin</p>
-                        <p class="text-[10px] text-neutral-400">Dashboard & Kelola</p>
-                    </div>
-                </a>
-                <a href="/dev/login/owner" class="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-neutral-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all duration-200">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm font-bold text-neutral-800">Owner</p>
-                        <p class="text-[10px] text-neutral-400">Dashboard View Only</p>
-                    </div>
-                </a>
-                <a href="/dev/login/customer" class="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-neutral-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm font-bold text-neutral-800">Customer</p>
-                        <p class="text-[10px] text-neutral-400">Belanja & Pesan</p>
-                    </div>
-                </a>
-            </div>
-        </div>
-
         {{-- Security Notice --}}
         <div class="mt-6 flex items-center justify-center gap-2 text-xs text-neutral-400">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
